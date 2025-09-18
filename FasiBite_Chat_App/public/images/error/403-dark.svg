@@ -1,0 +1,13 @@
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" rx="12" fill="#0F172A"/>
+  
+  <!-- Shield with Lock -->
+  <path d="M200 50C150 50 120 70 100 90L120 100C140 80 170 70 200 70C230 70 260 80 280 100L300 90C280 70 250 50 200 50Z" fill="#1E293B" stroke="#4F46E5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="160" y="120" width="80" height="90" rx="8" fill="#1E293B" stroke="#4F46E5" stroke-width="4"/>
+  <rect x="180" y="150" width="40" height="30" rx="4" fill="#0F172A" stroke="#4F46E5" stroke-width="2"/>
+  <circle cx="200" cy="130" r="10" fill="#4F46E5"/>
+  
+  <!-- Error Text -->
+  <text x="200" y="240" font-family="sans-serif" font-size="24" font-weight="600" fill="#E2E8F0" text-anchor="middle">403 - Access Forbidden</text>
+  <text x="200" y="270" font-family="sans-serif" font-size="14" fill="#94A3B8" text-anchor="middle">You don't have permission to access this page</text>
+</svg>

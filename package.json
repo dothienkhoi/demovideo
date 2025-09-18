@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@livekit/krisp-noise-filter": "^0.3.4",
+    "@livekit/track-processors": "^0.6.0"
+  }
+}
