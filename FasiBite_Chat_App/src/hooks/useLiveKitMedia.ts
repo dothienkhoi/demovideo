@@ -58,7 +58,6 @@ export function useMediaDevices(): UseMediaDevicesReturn {
             setSpeakers(speakersList);
             setHasLoaded(true);
         } catch (err) {
-            console.error("Error loading media devices:", err);
             setError("Không thể tải danh sách thiết bị");
         } finally {
             setIsLoading(false);
@@ -120,15 +119,6 @@ export function useCamera({
     deviceId,
     onError
 }: UseCameraProps): UseCameraReturn {
-    console.log("useCamera hook called with:", { enabled, deviceId });
-
-    // Add debug log for component mount/unmount
-    useEffect(() => {
-        console.log("useCamera component mounted with params:", { enabled, deviceId });
-        return () => {
-            console.log("useCamera component unmounted");
-        };
-    }, [enabled, deviceId]);
     const [videoTrack, setVideoTrack] = useState<LocalVideoTrack | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -142,26 +132,21 @@ export function useCamera({
     const cleanup = useCallback(async () => {
         if (videoTrackRef.current) {
             try {
-                console.log("Stopping video track...");
                 await videoTrackRef.current.stop();
                 videoTrackRef.current = null;
                 setVideoTrack(null);
                 setIsActive(false);
-                console.log("Video track stopped successfully");
             } catch (err) {
-                console.error("Error stopping video track:", err);
+                // Silent error handling for production
             }
         }
     }, []); // Không depend vào gì để tránh re-create
 
     const startCamera = useCallback(async () => {
         if (!deviceId) {
-            console.log("No device ID, cannot start camera");
             setError("Không có thiết bị camera được chọn");
             return;
         }
-
-        console.log("Starting camera with device:", deviceId);
 
         setIsLoading(true);
         setError(null);
@@ -169,17 +154,13 @@ export function useCamera({
         try {
             // Cleanup existing track first
             if (videoTrackRef.current) {
-                console.log("Cleaning up existing video track");
                 await cleanup();
             }
 
-            console.log("Creating new video track...");
             const track = await createLocalVideoTrack({
                 deviceId,
                 resolution: { width: 640, height: 480, frameRate: 15 },
             });
-
-            console.log("Video track created successfully");
 
             // Add small delay to avoid race condition
             await new Promise(resolve => setTimeout(resolve, 10));
@@ -189,13 +170,10 @@ export function useCamera({
                 videoTrackRef.current = track;
                 setVideoTrack(track);
                 setIsActive(true);
-                console.log("Camera started successfully");
             } else {
-                console.log("Component unmounted during track creation, stopping track");
                 track.stop();
             }
         } catch (err) {
-            console.error("Error starting camera:", err);
             const errorMessage = "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.";
             setError(errorMessage);
             onError?.(errorMessage);
@@ -207,9 +185,7 @@ export function useCamera({
     }, [deviceId, onError]); // Không depend vào cleanup để tránh re-create
 
     const stopCamera = useCallback(async () => {
-        console.log("Stopping camera...");
         await cleanup();
-        console.log("Camera stopped successfully");
     }, []); // Không depend vào cleanup để tránh re-create
 
     const switchDevice = useCallback(async (newDeviceId: string) => {
@@ -221,11 +197,9 @@ export function useCamera({
     useEffect(() => {
         if (enabled && !prevEnabledRef.current) {
             // Camera was enabled
-            console.log("Camera enabled, starting camera...");
             startCamera();
         } else if (!enabled && prevEnabledRef.current) {
             // Camera was disabled
-            console.log("Camera disabled, stopping camera...");
             stopCamera();
         }
         prevEnabledRef.current = enabled;
@@ -297,7 +271,7 @@ export function useMicrophone({
                 setAudioTrack(null);
                 setIsActive(false);
             } catch (err) {
-                console.error("Error stopping audio track:", err);
+                // Silent error handling for production
             }
         }
     }, []);
@@ -326,7 +300,6 @@ export function useMicrophone({
                 track.stop();
             }
         } catch (err) {
-            console.error("Error starting microphone:", err);
             const errorMessage = "Không thể truy cập microphone. Vui lòng kiểm tra quyền truy cập.";
             setError(errorMessage);
             onError?.(errorMessage);
@@ -427,7 +400,6 @@ export function useLiveKitMedia({
     selectedMicrophone,
     onError
 }: UseLiveKitMediaProps): UseLiveKitMediaReturn {
-    console.log("useLiveKitMedia hook called with:", { cameraEnabled, microphoneEnabled, selectedCamera, selectedMicrophone });
     // Devices
     const {
         cameras,

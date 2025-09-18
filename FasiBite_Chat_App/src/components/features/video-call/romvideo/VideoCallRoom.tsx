@@ -58,7 +58,6 @@ export function VideoCallRoom({ roomId, conversationId, groupName = "Video Call"
     const isHostOrAdmin = useMemo(() => {
         // For testing purposes, always return true to enable admin features
         // In real implementation, this should check against current user's role
-        console.log("isHostOrAdmin Debug:", { groupLeaderId, isHostOrAdmin: true });
         return true; // Always enable admin features for testing
     }, [groupLeaderId]);
 

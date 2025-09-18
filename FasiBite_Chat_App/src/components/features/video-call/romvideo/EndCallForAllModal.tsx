@@ -35,7 +35,6 @@ export function EndCallForAllModal({
             await endVideoCallForAll(sessionId);
             onCallEnded("Cuộc gọi đã được kết thúc cho tất cả người tham gia", "ended_by_host");
         } catch (error) {
-            console.error("Error ending call for all:", error);
             // Still end the call locally even if API fails
             onCallEnded("Cuộc gọi đã được kết thúc cho tất cả người tham gia", "ended_by_host");
         } finally {

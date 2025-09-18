@@ -28,7 +28,9 @@ export function SimpleCameraPreview({ settings, onSettingsChange }: SimpleCamera
     useEffect(() => {
         if (stream && videoRef.current) {
             videoRef.current.srcObject = stream;
-            videoRef.current.play().catch(console.error);
+            videoRef.current.play().catch(() => {
+                // Handle video play error silently
+            });
         }
     }, [stream]);
 
@@ -50,7 +52,6 @@ export function SimpleCameraPreview({ settings, onSettingsChange }: SimpleCamera
                 await videoRef.current.play();
             }
         } catch (err) {
-            console.error("Error starting camera:", err);
             setError("Không thể truy cập camera");
         } finally {
             setIsLoading(false);

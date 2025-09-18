@@ -29,7 +29,6 @@ export function EndCallButton({
             await leaveVideoCall(sessionId);
             onCallEnded("Bạn đã rời khỏi cuộc gọi", "ended_by_user");
         } catch (error) {
-            console.error("Error leaving call:", error);
             // Still end the call locally even if API fails
             onCallEnded("Bạn đã rời khỏi cuộc gọi", "ended_by_user");
         } finally {

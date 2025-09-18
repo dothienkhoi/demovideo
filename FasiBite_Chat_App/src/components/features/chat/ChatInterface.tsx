@@ -28,17 +28,15 @@ export function ChatInterface({ conversationDetails }: ChatInterfaceProps) {
       // Open video call room after successfully joining
       openVideoCall(sessionData, conversationDetails.displayName);
     } catch (error) {
-      console.error("Failed to join video call:", error);
+      // Handle error silently or show toast
     }
   };
 
   const handleCreateVideoCall = async () => {
     try {
-      console.log("Creating new video call...");
       const sessionData = await createVideoCall();
-      console.log("Video call created:", sessionData);
     } catch (error) {
-      console.error("Failed to create video call:", error);
+      // Handle error silently or show toast
     }
   };
 

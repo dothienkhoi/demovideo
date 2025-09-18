@@ -40,11 +40,6 @@ export function SettingsPanel({ onClose, onEndCallForAll, isLeavingCall, isVisib
     // Modal state
     const [showEndCallModal, setShowEndCallModal] = useState(false);
 
-    // Debug modal state
-    useEffect(() => {
-        console.log("Modal state changed:", showEndCallModal);
-    }, [showEndCallModal]);
-
     // Handle device changes
     const handleCameraChange = (deviceId: string) => {
         setRoomSettings(prev => ({ ...prev, selectedCamera: deviceId }));
@@ -67,7 +62,6 @@ export function SettingsPanel({ onClose, onEndCallForAll, isLeavingCall, isVisib
 
     // Handle end call modal
     const handleEndCallClick = () => {
-        console.log("End call button clicked, opening modal");
         setShowEndCallModal(true);
     };
 

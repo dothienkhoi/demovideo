@@ -19,7 +19,6 @@ export function useVideoCallManager({ conversationId }: UseVideoCallManagerProps
             setActiveVideoCall(sessionData);
             return sessionData;
         } catch (error) {
-            console.error("Error creating video call:", error);
             throw error;
         } finally {
             setIsCreatingCall(false);
@@ -34,7 +33,6 @@ export function useVideoCallManager({ conversationId }: UseVideoCallManagerProps
             setActiveVideoCall(sessionData);
             return sessionData;
         } catch (error) {
-            console.error("Error joining video call:", error);
             throw error;
         } finally {
             setIsJoiningCall(false);

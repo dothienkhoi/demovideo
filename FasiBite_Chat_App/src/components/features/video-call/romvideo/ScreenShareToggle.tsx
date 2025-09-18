@@ -55,7 +55,6 @@ export function ScreenShareToggle({ className = "" }: ScreenShareToggleProps) {
                 await localParticipant.localParticipant.setScreenShareEnabled(true);
             }
         } catch (error) {
-            console.error("Screen share error:", error);
             // Handle error - could show a toast notification
         } finally {
             setIsLoading(false);

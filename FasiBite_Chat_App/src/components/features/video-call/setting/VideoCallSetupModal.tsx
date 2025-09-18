@@ -81,7 +81,6 @@ export function VideoCallSetupModal({
 
     const handleJoinCall = async () => {
         if (!groupId) {
-            console.error("Group ID is required to start video call");
             return;
         }
 
@@ -103,7 +102,7 @@ export function VideoCallSetupModal({
             const videoCallUrl = `/video-call/${session.videoCallSessionId}?groupName=${encodeURIComponent(groupName)}&token=${encodeURIComponent(session.livekitToken)}&serverUrl=${encodeURIComponent(session.livekitServerUrl)}&settings=${encodeURIComponent(JSON.stringify(settingsData))}&groupLeaderId=${encodeURIComponent(userId || '')}`;
             window.open(videoCallUrl, '_blank', 'noopener,noreferrer');
         } catch (error) {
-            console.error("Failed to start video call:", error);
+            // Handle error silently or show toast
         } finally {
             setIsStartingCall(false);
         }

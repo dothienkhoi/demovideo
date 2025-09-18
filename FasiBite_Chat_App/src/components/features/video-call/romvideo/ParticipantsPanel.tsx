@@ -26,22 +26,12 @@ export function ParticipantsPanel({ groupLeaderId, onClose, isVisible = true, se
     const localParticipant = useLocalParticipant();
     const [isLoading, setIsLoading] = useState<string | null>(null);
 
-    // Debug logging for component props
-    console.log("ParticipantsPanel Props Debug:", {
-        groupLeaderId,
-        isAdmin,
-        sessionId,
-        participantsCount: participants.length,
-        participants: participants.map(p => ({ identity: p.identity, name: p.name }))
-    });
-
     // Use real participants from LiveKit
     const displayParticipants = participants;
 
     // Handle mute/unmute participant microphone
     const handleMuteParticipant = async (participantId: string, isCurrentlyMuted: boolean) => {
         if (!sessionId || !isAdmin) {
-            console.warn("Cannot mute participant: missing sessionId or not admin");
             return;
         }
 
@@ -49,15 +39,12 @@ export function ParticipantsPanel({ groupLeaderId, onClose, isVisible = true, se
         try {
             if (isCurrentlyMuted) {
                 // If currently muted, we would need an "unmute" API - for now just log
-                console.log(`Unmuting participant ${participantId}`);
                 // TODO: Add unmute API call when available
             } else {
                 // Mute the participant
                 await muteParticipantMic(sessionId, participantId);
-                console.log(`Successfully muted participant ${participantId}`);
             }
         } catch (error) {
-            console.error(`Failed to mute participant ${participantId}:`, error);
             // TODO: Show error toast/notification
         } finally {
             setIsLoading(null);
@@ -67,7 +54,6 @@ export function ParticipantsPanel({ groupLeaderId, onClose, isVisible = true, se
     // Handle stop/start participant video
     const handleStopParticipantVideo = async (participantId: string, isCurrentlyStopped: boolean) => {
         if (!sessionId || !isAdmin) {
-            console.warn("Cannot stop participant video: missing sessionId or not admin");
             return;
         }
 
@@ -75,15 +61,12 @@ export function ParticipantsPanel({ groupLeaderId, onClose, isVisible = true, se
         try {
             if (isCurrentlyStopped) {
                 // If currently stopped, we would need a "start video" API - for now just log
-                console.log(`Starting video for participant ${participantId}`);
                 // TODO: Add start video API call when available
             } else {
                 // Stop the participant's video
                 await stopParticipantVideo(sessionId, participantId);
-                console.log(`Successfully stopped video for participant ${participantId}`);
             }
         } catch (error) {
-            console.error(`Failed to stop participant video ${participantId}:`, error);
             // TODO: Show error toast/notification
         } finally {
             setIsLoading(null);
@@ -93,7 +76,6 @@ export function ParticipantsPanel({ groupLeaderId, onClose, isVisible = true, se
     // Handle remove participant from call
     const handleRemoveParticipant = async (participantId: string, participantName: string) => {
         if (!sessionId || !isAdmin) {
-            console.warn("Cannot remove participant: missing sessionId or not admin");
             return;
         }
 
@@ -106,10 +88,8 @@ export function ParticipantsPanel({ groupLeaderId, onClose, isVisible = true, se
         setIsLoading(`remove-${participantId}`);
         try {
             await removeParticipant(sessionId, participantId);
-            console.log(`Successfully removed participant ${participantName} (${participantId}) from call`);
             // TODO: Show success toast/notification
         } catch (error) {
-            console.error(`Failed to remove participant ${participantName} (${participantId}):`, error);
             // TODO: Show error toast/notification
         } finally {
             setIsLoading(null);
@@ -147,16 +127,6 @@ export function ParticipantsPanel({ groupLeaderId, onClose, isVisible = true, se
                         const isLeader = groupLeaderId ?
                             participant.identity === groupLeaderId :
                             (isLocal || (participant.metadata && JSON.parse(participant.metadata).isLeader === true) || participant.identity === 'leader');
-
-                        // Debug logging for dropdown visibility
-                        console.log("Dropdown Debug:", {
-                            participantIdentity: participant.identity,
-                            participantName: name,
-                            isLeader,
-                            isAdmin,
-                            shouldShowDropdown: !isLeader && isAdmin,
-                            groupLeaderId
-                        });
 
                         // Use project's standard avatar gradient and initials
                         const avatarGradient = getAvatarGradient();

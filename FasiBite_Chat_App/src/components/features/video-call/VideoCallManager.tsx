@@ -33,9 +33,6 @@ export function VideoCallManager({
     const parsedVideoCallData = React.useMemo(() => {
         if (!currentVideoCallData) return null;
 
-        console.log("Raw video call data:", currentVideoCallData);
-        console.log("Data type:", typeof currentVideoCallData);
-
         try {
             // Handle different formats from backend
             let parsedData;
@@ -49,21 +46,16 @@ export function VideoCallManager({
                 parsedData = JSON.parse(currentVideoCallData);
             }
             else {
-                console.warn("Unexpected video call data format:", currentVideoCallData);
                 return null;
             }
-
-            console.log("Parsed video call data:", parsedData);
 
             // Validate that we have the required fields
             if (parsedData && parsedData.videoCallSessionId) {
                 return parsedData as VideoCallSessionData;
             } else {
-                console.warn("Invalid video call data structure:", parsedData);
                 return null;
             }
         } catch (error) {
-            console.error("Error parsing video call data:", error);
             return null;
         }
     }, [currentVideoCallData]);
@@ -76,7 +68,6 @@ export function VideoCallManager({
             const sessionData = await createVideoCall();
             openVideoCall(sessionData, groupName);
         } catch (error) {
-            console.error("Failed to create video call:", error);
             // Handle error (show toast, etc.)
         }
     };
@@ -86,7 +77,6 @@ export function VideoCallManager({
             const sessionData = await joinVideoCall(sessionId);
             openVideoCall(sessionData, groupName);
         } catch (error) {
-            console.error("Failed to join video call:", error);
             // Handle error (show toast, etc.)
         }
     };

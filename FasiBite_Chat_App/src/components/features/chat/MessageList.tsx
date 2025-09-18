@@ -105,17 +105,6 @@ export function MessageList({
                 const sessionId = extractSessionId(message.content);
                 const isCallActive = activeVideoCallSessionId === sessionId;
 
-                // Debug logging (only in development)
-                if (process.env.NODE_ENV === 'development') {
-                  console.log("Video call message detected:", {
-                    sessionId,
-                    activeVideoCallSessionId,
-                    isCallActive,
-                    messageContent: message.content,
-                    isCreatingVideoCall
-                  });
-                }
-
                 // If we're currently creating a call, show active call UI for the most recent message
                 // This handles the case where activeVideoCallSessionId might not be set yet
                 const isMostRecentMessage = messages.indexOf(message) === messages.length - 1;
@@ -131,9 +120,6 @@ export function MessageList({
 
                 // If call is active or we're creating a new call, show active call UI
                 if (shouldShowAsActive && onJoinVideoCall) {
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log("Showing active call UI for session:", sessionId);
-                  }
                   return (
                     <div key={message.id}>
                       <VideoCallMessage
@@ -148,9 +134,6 @@ export function MessageList({
 
                 // If call is not active, show ended call UI
                 if (onCreateVideoCall) {
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log("Showing ended call UI for session:", sessionId);
-                  }
                   return (
                     <div key={message.id}>
                       <VideoCallEndedMessage

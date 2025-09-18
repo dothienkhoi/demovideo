@@ -25,7 +25,6 @@ export const useOneSignalSubscription = () => {
         try {
           await subscribeToPushNotifications(playerId);
           localStorage.setItem(SUBSCRIPTION_STORAGE_KEY, "true");
-          console.log("OneSignal Player ID synced with backend.");
         } catch (error) {
           handleApiError(error, "Không thể đồng bộ hóa thông báo đẩy.");
         }

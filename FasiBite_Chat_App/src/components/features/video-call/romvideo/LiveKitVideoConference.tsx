@@ -60,7 +60,6 @@ export function LiveKitVideoConference({ sessionId, onClose, groupName }: LiveKi
                     setIsConnecting(false);
                 }
             } catch (err) {
-                console.error("Failed to connect to LiveKit room:", err);
                 if (isMounted) {
                     setError(err instanceof Error ? err.message : "Failed to connect to LiveKit room");
                     setIsConnecting(false);
@@ -81,7 +80,7 @@ export function LiveKitVideoConference({ sessionId, onClose, groupName }: LiveKi
             // Leave the call via backend API
             await leaveVideoCall(sessionId);
         } catch (error) {
-            console.error("Failed to leave call:", error);
+            // Handle error silently
         } finally {
             // Always disconnect from room and call onClose
             room.disconnect();
