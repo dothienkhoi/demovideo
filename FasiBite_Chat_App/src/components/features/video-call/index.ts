@@ -19,6 +19,9 @@ export { VideoCallManager } from "./viewcallcg/VideoCallManager";
 export { VideoCallNotification } from "./viewcallcg/VideoCallNotification";
 export { StartVideoCallButton } from "./viewcallcg/StartVideoCallButton";
 
+// Export direct video call components
+export { IncomingCallModal, OutgoingCallModal, DirectVideoCallManager } from "./videocg1-1";
+
 // Export hooks
 export { useLiveKitMedia, useMediaDevices, useCamera, useMicrophone } from "@/hooks/useLiveKitMedia";
 export { useVideoCallAdmin } from "@/hooks/useVideoCallAdmin";

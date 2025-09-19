@@ -23,6 +23,48 @@ export function ScreenShareTextOverride() {
                         nameElement.textContent = `Màn hình của ${participantName}`;
                     }
                 }
+
+                // Fix screen share video display issues
+                const videoElement = tile.querySelector('video');
+                if (videoElement) {
+                    // Ensure video is visible and properly sized
+                    videoElement.style.width = '100%';
+                    videoElement.style.height = '100%';
+                    videoElement.style.objectFit = 'contain';
+                    videoElement.style.background = '#000';
+                    videoElement.style.position = 'absolute';
+                    videoElement.style.top = '0';
+                    videoElement.style.left = '0';
+                    videoElement.style.right = '0';
+                    videoElement.style.bottom = '0';
+
+                    // Force video to be visible
+                    videoElement.style.display = 'block';
+                    videoElement.style.visibility = 'visible';
+                    videoElement.style.opacity = '1';
+
+                    // Force video to play if paused (common issue when tab is hidden)
+                    if (videoElement.paused) {
+                        videoElement.play().catch(() => {
+                            // Ignore play errors, video might not be ready
+                        });
+                    }
+
+                    // Force video to load if not loaded
+                    if (videoElement.readyState < 2) {
+                        videoElement.load();
+                    }
+                }
+
+                // Ensure tile container is properly styled
+                const tileElement = tile as HTMLElement;
+                tileElement.style.position = 'relative';
+                tileElement.style.overflow = 'hidden';
+                tileElement.style.background = '#000';
+                tileElement.style.minHeight = '200px';
+                tileElement.style.display = 'flex';
+                tileElement.style.alignItems = 'center';
+                tileElement.style.justifyContent = 'center';
             });
         };
 
@@ -52,9 +94,52 @@ export function ScreenShareTextOverride() {
             subtree: true
         });
 
+        // Handle zoom events
+        const handleZoom = () => {
+            setTimeout(() => {
+                overrideScreenShareText();
+            }, 100);
+        };
+
+        // Listen for zoom events
+        window.addEventListener('resize', handleZoom);
+        window.addEventListener('orientationchange', handleZoom);
+
+        // Listen for zoom changes (browser zoom)
+        const mediaQuery = window.matchMedia('(min-resolution: 1.25dppx)');
+        mediaQuery.addEventListener('change', handleZoom);
+
+        // Handle tab visibility changes (minimize/maximize)
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                // Tab became visible again, fix screen share
+                setTimeout(() => {
+                    overrideScreenShareText();
+                }, 200);
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Handle window focus/blur events
+        const handleWindowFocus = () => {
+            setTimeout(() => {
+                overrideScreenShareText();
+            }, 100);
+        };
+
+        window.addEventListener('focus', handleWindowFocus);
+        window.addEventListener('blur', handleWindowFocus);
+
         // Cleanup
         return () => {
             observer.disconnect();
+            window.removeEventListener('resize', handleZoom);
+            window.removeEventListener('orientationchange', handleZoom);
+            mediaQuery.removeEventListener('change', handleZoom);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleWindowFocus);
+            window.removeEventListener('blur', handleWindowFocus);
         };
     }, []);
 

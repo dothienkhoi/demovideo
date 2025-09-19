@@ -124,9 +124,9 @@ export function MessageList({
                     <div key={message.id}>
                       <VideoCallMessage
                         message={message}
+                        conversationId={conversationId}
                         onJoinCall={onJoinVideoCall}
                         isJoiningCall={isJoiningVideoCall}
-                        isCallActive={true}
                       />
                     </div>
                   );
