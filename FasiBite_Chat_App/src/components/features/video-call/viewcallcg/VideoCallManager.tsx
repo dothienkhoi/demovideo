@@ -3,7 +3,7 @@
 import React from "react";
 import { Video, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useVideoCallManager } from "@/hooks/useVideoCallManager";
+import { useVideoCallAdmin } from "@/hooks/useVideoCallAdmin";
 import { VideoCallNotification } from "./VideoCallNotification";
 import { StartVideoCallButton } from "./StartVideoCallButton";
 import { VideoCallSessionData } from "@/types/video-call-api.types";
@@ -27,7 +27,7 @@ export function VideoCallManager({
         joinVideoCall,
         openVideoCall,
         closeVideoCall,
-    } = useVideoCallManager({ conversationId });
+    } = useVideoCallAdmin({ conversationId });
 
     // Parse current video call data from backend
     const parsedVideoCallData = React.useMemo(() => {

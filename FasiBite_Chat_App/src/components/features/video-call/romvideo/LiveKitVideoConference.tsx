@@ -10,11 +10,13 @@ import { X, PhoneOff } from "lucide-react";
 
 interface LiveKitVideoConferenceProps {
     sessionId: string;
+    conversationId: number;
     onClose: () => void;
     groupName?: string;
+    userId?: string;
 }
 
-export function LiveKitVideoConference({ sessionId, onClose, groupName }: LiveKitVideoConferenceProps) {
+export function LiveKitVideoConference({ sessionId, conversationId, onClose, groupName, userId }: LiveKitVideoConferenceProps) {
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
@@ -47,7 +49,7 @@ export function LiveKitVideoConference({ sessionId, onClose, groupName }: LiveKi
                 setIsConnecting(true);
 
                 // Get LiveKit token from backend
-                const joinResponse = await joinVideoCall(sessionId);
+                const joinResponse = await joinVideoCall(sessionId, conversationId, userId);
 
                 if (isMounted) {
                     // Connect to LiveKit room with real token

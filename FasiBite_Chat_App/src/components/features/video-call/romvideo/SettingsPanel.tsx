@@ -20,6 +20,7 @@ interface SettingsPanelProps {
     isLeavingCall: boolean;
     isVisible?: boolean;
     sessionId: string;
+    isAdmin?: boolean;
     initialSettings?: {
         selectedCamera?: string | null;
         selectedMicrophone?: string | null;
@@ -27,7 +28,7 @@ interface SettingsPanelProps {
     };
 }
 
-export function SettingsPanel({ onClose, onEndCallForAll, isLeavingCall, isVisible = true, sessionId, initialSettings }: SettingsPanelProps) {
+export function SettingsPanel({ onClose, onEndCallForAll, isLeavingCall, isVisible = true, sessionId, isAdmin = false, initialSettings }: SettingsPanelProps) {
     const { cameras, microphones, speakers, refreshDevices } = useMediaDevices();
 
     // Settings state
@@ -235,25 +236,27 @@ export function SettingsPanel({ onClose, onEndCallForAll, isLeavingCall, isVisib
                         </div>
                     </div>
 
-                    {/* End Call Button */}
-                    <div className="space-y-3 p-4 rounded-xl bg-gradient-to-r from-red-500/5 to-orange-500/5 border border-red-500/10">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-gradient-to-br from-red-500/10 to-red-600/10">
-                                <Users className="w-5 h-5 text-red-500" />
+                    {/* End Call Button - Only for Admins */}
+                    {isAdmin && (
+                        <div className="space-y-3 p-4 rounded-xl bg-gradient-to-r from-red-500/5 to-orange-500/5 border border-red-500/10">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-gradient-to-br from-red-500/10 to-red-600/10">
+                                    <Users className="w-5 h-5 text-red-500" />
+                                </div>
+                                <Label className="text-card-foreground font-semibold">
+                                    Cuộc gọi
+                                </Label>
                             </div>
-                            <Label className="text-card-foreground font-semibold">
-                                Cuộc gọi
-                            </Label>
+                            <Button
+                                onClick={handleEndCallClick}
+                                disabled={isLeavingCall}
+                                variant="destructive"
+                                className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/25 transition-all duration-200 disabled:opacity-50"
+                            >
+                                {isLeavingCall ? "Đang kết thúc..." : "Kết thúc tất cả"}
+                            </Button>
                         </div>
-                        <Button
-                            onClick={handleEndCallClick}
-                            disabled={isLeavingCall}
-                            variant="destructive"
-                            className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/25 transition-all duration-200 disabled:opacity-50"
-                        >
-                            {isLeavingCall ? "Đang kết thúc..." : "Kết thúc tất cả"}
-                        </Button>
-                    </div>
+                    )}
                 </div>
             </div>
 

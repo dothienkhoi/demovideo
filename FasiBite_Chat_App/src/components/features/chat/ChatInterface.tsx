@@ -6,7 +6,9 @@ import {
   ConversationDetailDto,
   ConversationType,
 } from "@/types/customer/user.types";
-import { useVideoCallManager } from "@/hooks/useVideoCallManager";
+import { useVideoCallAdmin } from "@/hooks/useVideoCallAdmin";
+import { VideoCallSetupModal } from "../video-call/setting/VideoCallSetupModal";
+import { useState } from "react";
 
 interface ChatInterfaceProps {
   conversationDetails: ConversationDetailDto;
@@ -20,7 +22,10 @@ export function ChatInterface({ conversationDetails }: ChatInterfaceProps) {
     isCreatingCall,
     activeVideoCall,
     openVideoCall,
-  } = useVideoCallManager({ conversationId: conversationDetails.conversationId });
+    isInitiator,
+  } = useVideoCallAdmin({ conversationId: conversationDetails.conversationId });
+
+  const [showSetupModal, setShowSetupModal] = useState(false);
 
   const handleJoinVideoCall = async (sessionId: string) => {
     try {
@@ -33,8 +38,25 @@ export function ChatInterface({ conversationDetails }: ChatInterfaceProps) {
   };
 
   const handleCreateVideoCall = async () => {
+    // Show setup modal for group conversations
+    if (conversationDetails.conversationType === ConversationType.Group) {
+      setShowSetupModal(true);
+    } else {
+      // For direct messages, create call directly
+      try {
+        const sessionData = await createVideoCall();
+        openVideoCall(sessionData, conversationDetails.displayName);
+      } catch (error) {
+        // Handle error silently or show toast
+      }
+    }
+  };
+
+  const handleSetupModalJoin = async () => {
     try {
       const sessionData = await createVideoCall();
+      openVideoCall(sessionData, conversationDetails.displayName);
+      setShowSetupModal(false);
     } catch (error) {
       // Handle error silently or show toast
     }
@@ -77,6 +99,15 @@ export function ChatInterface({ conversationDetails }: ChatInterfaceProps) {
       <div className="border-t border-gray-200/60 dark:border-gray-700/60 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg">
         <ChatInput conversationId={conversationDetails.conversationId} />
       </div>
+
+      {/* Video Call Setup Modal */}
+      <VideoCallSetupModal
+        isOpen={showSetupModal}
+        onOpenChange={setShowSetupModal}
+        onJoinCall={handleSetupModalJoin}
+        groupId={conversationDetails.conversationId.toString()}
+        groupName={conversationDetails.displayName}
+      />
     </div>
   );
 }

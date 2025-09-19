@@ -38,12 +38,8 @@ export function GroupChatHeader({ conversationDetails }: GroupChatHeaderProps) {
   };
 
   const handleJoinVideoCall = (settings: VideoCallSettings) => {
-    // TODO: Implement video call joining logic
-    console.log("Joining video call with settings:", settings);
-    // Here you would typically:
-    // 1. Create a video call room
-    // 2. Connect to WebRTC or your video calling service
-    // 3. Navigate to the video call interface
+    // This will be handled by the ChatInterface component
+    // The modal will trigger the video call creation directly
   };
 
   return (

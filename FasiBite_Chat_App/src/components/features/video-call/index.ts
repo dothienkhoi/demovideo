@@ -15,10 +15,10 @@ export { EndCallButton } from "./romvideo/EndCallButton";
 export { EndCallForAllModal } from "./romvideo/EndCallForAllModal";
 
 // Export video call management components
-export { VideoCallManager } from "./VideoCallManager";
-export { VideoCallNotification } from "./VideoCallNotification";
-export { StartVideoCallButton } from "./StartVideoCallButton";
+export { VideoCallManager } from "./viewcallcg/VideoCallManager";
+export { VideoCallNotification } from "./viewcallcg/VideoCallNotification";
+export { StartVideoCallButton } from "./viewcallcg/StartVideoCallButton";
 
 // Export hooks
 export { useLiveKitMedia, useMediaDevices, useCamera, useMicrophone } from "@/hooks/useLiveKitMedia";
-export { useVideoCallManager } from "@/hooks/useVideoCallManager";
+export { useVideoCallAdmin } from "@/hooks/useVideoCallAdmin";

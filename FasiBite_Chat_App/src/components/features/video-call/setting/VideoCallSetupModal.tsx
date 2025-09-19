@@ -99,7 +99,7 @@ export function VideoCallSetupModal({
                 usePhoneAudio: settings.usePhoneAudio
             };
 
-            const videoCallUrl = `/video-call/${session.videoCallSessionId}?groupName=${encodeURIComponent(groupName)}&token=${encodeURIComponent(session.livekitToken)}&serverUrl=${encodeURIComponent(session.livekitServerUrl)}&settings=${encodeURIComponent(JSON.stringify(settingsData))}&groupLeaderId=${encodeURIComponent(userId || '')}`;
+            const videoCallUrl = `/video-call/${session.videoCallSessionId}?groupName=${encodeURIComponent(groupName)}&token=${encodeURIComponent(session.livekitToken)}&serverUrl=${encodeURIComponent(session.livekitServerUrl)}&settings=${encodeURIComponent(JSON.stringify(settingsData))}&isInitiator=true&userId=${encodeURIComponent(userId || '')}&conversationId=${encodeURIComponent(groupId)}`;
             window.open(videoCallUrl, '_blank', 'noopener,noreferrer');
         } catch (error) {
             // Handle error silently or show toast
@@ -129,7 +129,7 @@ export function VideoCallSetupModal({
                                             Tham gia {groupName}
                                         </DialogTitle>
                                         <DialogDescription className="text-muted-foreground text-sm mt-1">
-                                            Thiết lập máy quay và thu âm trước khi tham gia. Cuộc gọi sẽ mở trong tab mới.
+                                            Thiết lập máy quay, thu âm và loa trước khi tham gia. Cuộc gọi sẽ mở trong tab mới.
                                         </DialogDescription>
                                     </div>
                                 </div>

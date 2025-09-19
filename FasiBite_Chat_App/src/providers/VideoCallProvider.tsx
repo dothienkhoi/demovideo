@@ -5,6 +5,7 @@ import { LiveKitVideoConference } from "@/components/features/video-call/romvide
 import { VideoCallMinimized } from "@/components/features/video-call/setting/VideoCallMinimized";
 import { VideoCallSessionData } from "@/types/video-call-api.types";
 import { VideoCallSettings } from "@/types/video-call.types";
+import { useAuthStore } from "@/store/authStore";
 
 interface VideoCallState {
     isActive: boolean;
@@ -37,6 +38,7 @@ interface VideoCallProviderProps {
 }
 
 export function VideoCallProvider({ children }: VideoCallProviderProps) {
+    const { user } = useAuthStore();
     const [videoCallState, setVideoCallState] = useState<VideoCallState>({
         isActive: false,
         sessionData: null,
@@ -100,7 +102,9 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             {videoCallState.isActive && videoCallState.sessionData && videoCallState.conversationId && (
                 <LiveKitVideoConference
                     sessionId={videoCallState.sessionData.videoCallSessionId}
+                    conversationId={videoCallState.conversationId}
                     groupName={videoCallState.groupName}
+                    userId={user?.id}
                     onClose={endVideoCall}
                 />
             )}

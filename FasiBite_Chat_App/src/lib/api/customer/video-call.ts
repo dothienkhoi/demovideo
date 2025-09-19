@@ -1,4 +1,25 @@
-// lib/api/customer/video-call.ts
+// Base error handling utility
+const handleApiError = (error: any, defaultMessage: string): never => {
+    if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+    } else if (error.response?.status === 500) {
+        throw new Error(`Server error: ${defaultMessage}`);
+    } else if (error.response?.status === 404) {
+        throw new Error(`Resource not found: ${defaultMessage}`);
+    } else if (error.response?.status === 401 || error.response?.status === 403) {
+        throw new Error(`Unauthorized: ${defaultMessage}`);
+    } else {
+        throw new Error(error.message || defaultMessage);
+    }
+};
+
+// Response validation utility
+const validateApiResponse = <T>(response: { data: { success: boolean; data: T; message?: string } }, errorMessage: string): T => {
+    if (!response.data.success) {
+        throw new Error(response.data.message || errorMessage);
+    }
+    return response.data.data;
+};
 
 import apiClient from "@/lib/api/apiClient";
 import { ApiResponse } from "@/types/api.types";
@@ -25,7 +46,48 @@ export interface LiveKitConnectionDetails {
     participantName: string;
 }
 
-// ===== CONVERSATION-BASED APIs =====
+// ===== CALL HISTORY TYPES =====
+export interface VideoCallSession {
+    videoCallSessionId: string;
+    initiatorUserId: string;
+    initiatorName: string;
+    startedAt: string;
+    endedAt?: string;
+    durationInMinutes: number;
+    participantCount: number;
+}
+
+export interface CallHistoryResponse {
+    success: boolean;
+    message: string;
+    data: VideoCallSession[];
+    errors?: Array<{
+        errorCode: string;
+        message: string;
+    }>;
+    statusCode: number;
+}
+
+export interface VideoCallSessionDetails {
+    sessionId: string;
+    conversationId: number;
+    initiatorUserId: string;
+    initiatorName: string;
+    isActive: boolean;
+    participants: VideoCallAdminParticipant[];
+    createdAt: string;
+}
+
+export interface VideoCallAdminParticipant {
+    userId: string;
+    userName: string;
+    isAdmin: boolean;
+    joinedAt: string;
+    leftAt?: string;
+    isActive: boolean;
+}
+
+// ===== CORE VIDEO CALL APIs =====
 
 /**
  * Start a new video call session in a conversation
@@ -38,12 +100,8 @@ export const startVideoCall = async (
         `/conversations/${conversationId}/calls`
     );
 
-    if (!response.data.success) {
-        throw new Error(response.data.message || "Failed to start video call");
-    }
+    const backendData = validateApiResponse(response, "Failed to start video call");
 
-    // Convert backend response to frontend format
-    const backendData = response.data.data;
     return {
         videoCallSessionId: backendData.videoCallSessionId,
         livekitToken: backendData.livekitToken,
@@ -55,109 +113,30 @@ export const startVideoCall = async (
  * Join an existing video call session
  * POST /api/v1/video-calls/{sessionId}/join
  */
-export const joinVideoCallSession = async (
+export const joinVideoCall = async (
+    sessionId: string,
     conversationId: number,
-    sessionId: string
+    userId?: string
 ): Promise<VideoCallSessionData> => {
-    const response = await apiClient.post<ApiResponse<JoinCallResponseDto>>(
-        `/video-calls/${sessionId}/join`
-    );
+    const requestBody: Record<string, any> = { conversationId };
 
-    if (!response.data.success) {
-        throw new Error(response.data.message || "Failed to join video call");
+    if (userId) {
+        requestBody.userId = userId;
     }
 
-    // Convert backend response to frontend format
-    const backendData = response.data.data;
+    const response = await apiClient.post<ApiResponse<JoinCallResponseDto>>(
+        `/video-calls/${sessionId}/join`,
+        requestBody
+    );
+
+    const backendData = validateApiResponse(response, "Failed to join video call");
+
     return {
-        videoCallSessionId: sessionId, // Use the sessionId from parameter
+        videoCallSessionId: sessionId,
         livekitToken: backendData.livekitToken,
         livekitServerUrl: backendData.livekitServerUrl,
     };
 };
-
-/**
- * End a video call session
- * DELETE /api/v1/conversations/{conversationId}/calls/{sessionId}
- */
-export const endVideoCall = async (
-    conversationId: number,
-    sessionId: string
-): Promise<void> => {
-    await apiClient.delete(
-        `/conversations/${conversationId}/calls/${sessionId}`
-    );
-};
-
-/**
- * Get video call session details
- * GET /api/v1/conversations/{conversationId}/calls/{sessionId}
- */
-export const getVideoCallSession = async (
-    conversationId: number,
-    sessionId: string
-): Promise<VideoCallSessionData> => {
-    const response = await apiClient.get<StartVideoCallResponse>(
-        `/conversations/${conversationId}/calls/${sessionId}`
-    );
-
-    if (!response.data.success) {
-        throw new Error(response.data.message || "Failed to get video call session");
-    }
-
-    return response.data.data;
-};
-
-/**
- * Get video call participants
- * GET /api/v1/conversations/{conversationId}/calls/{sessionId}/participants
- */
-export const getVideoCallParticipants = async (
-    conversationId: number,
-    sessionId: string
-): Promise<VideoCallParticipant[]> => {
-    const response = await apiClient.get<ApiResponse<VideoCallParticipant[]>>(
-        `/conversations/${conversationId}/calls/${sessionId}/participants`
-    );
-
-    if (!response.data.success) {
-        throw new Error(response.data.message || "Failed to get video call participants");
-    }
-
-    return response.data.data;
-};
-
-/**
- * Update participant status (video/audio)
- * PUT /api/v1/conversations/{conversationId}/calls/{sessionId}/participants/{userId}/status
- */
-export const updateParticipantStatus = async (
-    conversationId: number,
-    sessionId: string,
-    userId: string,
-    status: {
-        isVideoEnabled?: boolean;
-        isAudioEnabled?: boolean;
-    }
-): Promise<void> => {
-    await apiClient.put(
-        `/conversations/${conversationId}/calls/${sessionId}/participants/${userId}/status`,
-        status
-    );
-};
-
-// ===== SESSION-BASED APIs =====
-
-/**
- * Join a video call and get LiveKit connection details
- * POST /api/v1/video-calls/{sessionId}/join
- */
-export async function joinVideoCall(sessionId: string): Promise<JoinCallResponse> {
-    const response = await apiClient.post<JoinCallResponse>(
-        `/api/v1/video-calls/${sessionId}/join`
-    );
-    return response.data;
-}
 
 /**
  * Leave a video call session
@@ -170,70 +149,109 @@ export const leaveVideoCall = async (
 };
 
 /**
- * Check if video call session is still active
- * GET /api/v1/video-calls/{sessionId}/status
- */
-export const checkVideoCallStatus = async (
-    sessionId: string
-): Promise<{ isActive: boolean; message?: string }> => {
-    const response = await apiClient.get<ApiResponse<{ isActive: boolean; message?: string }>>(
-        `/video-calls/${sessionId}/status`
-    );
-
-    if (!response.data.success) {
-        throw new Error(response.data.message || "Failed to check video call status");
-    }
-
-    return response.data.data;
-};
-
-/**
  * End video call for all participants (Admin/Host only)
  * POST /api/v1/video-calls/{sessionId}/end
  */
-export async function endVideoCallForAll(sessionId: string): Promise<void> {
+export const endVideoCallForAll = async (sessionId: string): Promise<void> => {
     await apiClient.post(`/video-calls/${sessionId}/end`);
-}
+};
+
+// ===== ADMIN CONTROL APIs =====
 
 /**
  * Mute participant microphone (Admin/Host only)
  * POST /api/v1/video-calls/{sessionId}/participants/{targetUserId}/mute-mic
  */
-export async function muteParticipantMic(sessionId: string, targetUserId: string): Promise<void> {
+export const muteParticipantMic = async (sessionId: string, targetUserId: string): Promise<void> => {
     await apiClient.post(`/video-calls/${sessionId}/participants/${targetUserId}/mute-mic`);
-}
+};
 
 /**
  * Stop participant video (Admin/Host only)
  * POST /api/v1/video-calls/{sessionId}/participants/{targetUserId}/stop-video
  */
-export async function stopParticipantVideo(sessionId: string, targetUserId: string): Promise<void> {
+export const stopParticipantVideo = async (sessionId: string, targetUserId: string): Promise<void> => {
     await apiClient.post(`/video-calls/${sessionId}/participants/${targetUserId}/stop-video`);
-}
+};
 
 /**
  * Remove participant from call (Admin/Host only)
  * DELETE /api/v1/video-calls/{sessionId}/participants/{targetUserId}
  */
-export async function removeParticipant(sessionId: string, targetUserId: string): Promise<void> {
+export const removeParticipant = async (sessionId: string, targetUserId: string): Promise<void> => {
     await apiClient.delete(`/video-calls/${sessionId}/participants/${targetUserId}`);
-}
+};
+
+// ===== LEGACY SUPPORT (for backward compatibility) =====
 
 /**
- * Accept direct call (1-1)
- * POST /api/v1/video-calls/{sessionId}/accept
+ * Get call history for a conversation (for admin functionality)
+ * GET /api/v1/conversations/{conversationId}/call-history
  */
-export async function acceptDirectCall(sessionId: string): Promise<JoinCallResponse> {
-    const response = await apiClient.post<JoinCallResponse>(
-        `/video-calls/${sessionId}/accept`
+export const getCallHistory = async (conversationId: number): Promise<VideoCallSession[]> => {
+    const response = await apiClient.get<CallHistoryResponse>(
+        `/conversations/${conversationId}/call-history`
     );
-    return response.data;
-}
+
+    const data = validateApiResponse(response, "Failed to fetch call history");
+    return data || [];
+};
 
 /**
- * Decline direct call (1-1)
- * POST /api/v1/video-calls/{sessionId}/decline
+ * Get current video call session details with participants (for admin functionality)
+ * Note: This function uses available APIs to construct session details
  */
-export async function declineDirectCall(sessionId: string): Promise<void> {
-    await apiClient.post(`/video-calls/${sessionId}/decline`);
-}
+export const getVideoCallSessionDetails = async (sessionId: string, conversationId: number): Promise<VideoCallSessionDetails> => {
+    try {
+        // For now, return basic session structure since the original endpoint doesn't exist
+        // The actual implementation would depend on what data is available from your backend
+        return {
+            sessionId: sessionId,
+            conversationId: conversationId,
+            initiatorUserId: '', // Would need to be determined from other context
+            initiatorName: '',
+            isActive: true, // Assume active if we're calling this function
+            participants: [], // Would need to be fetched from another endpoint if available
+            createdAt: new Date().toISOString()
+        };
+    } catch (error: any) {
+        if (error.response?.status === 404) {
+            throw new Error(`Video call session not found: ${sessionId}`);
+        }
+        return handleApiError(error, "Failed to fetch session details");
+    }
+};
+
+/**
+ * Check if current user is admin of a video call session (for admin functionality)
+ * Note: This is a simplified implementation since admin status checking isn't in your API list
+ */
+export const checkAdminStatus = async (sessionId: string, conversationId: number, currentUserId?: string): Promise<boolean> => {
+    try {
+        // Since there's no specific admin status API, this is a placeholder implementation
+        // In a real scenario, you would need to determine admin status from other available data
+        return false; // Default to false for safety
+    } catch (error: any) {
+        return false;
+    }
+};
+
+/**
+ * @deprecated Use joinVideoCall instead
+ * Join an existing video call session
+ */
+export const joinVideoCallSession = (conversationId: number, sessionId: string, userId?: string) => {
+    return joinVideoCall(sessionId, conversationId, userId);
+};
+
+/**
+ * @deprecated Use muteParticipantMic instead
+ * Mute a participant (admin only)
+ */
+export const muteParticipantAsAdmin = muteParticipantMic;
+
+/**
+ * @deprecated Use removeParticipant instead
+ * Remove a participant from the call (admin only)
+ */
+export const removeParticipantAsAdmin = removeParticipant;

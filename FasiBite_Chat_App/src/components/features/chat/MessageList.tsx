@@ -3,8 +3,8 @@ import { MessageDto } from "@/types/customer/user.types";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { VideoCallMessage } from "../video-call/VideoCallMessage";
-import { VideoCallEndedMessage } from "../video-call/VideoCallEndedMessage";
+import { VideoCallMessage } from "../video-call/viewcallcg/VideoCallMessage";
+import { VideoCallEndedMessage } from "../video-call/viewcallcg/VideoCallEndedMessage";
 
 interface MessageListProps {
   initialMessagesPage: PagedResult<MessageDto>;
