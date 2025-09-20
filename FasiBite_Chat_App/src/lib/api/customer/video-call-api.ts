@@ -49,11 +49,14 @@ import {
 export const startVideoCallSignalR = async (
     conversationId: number
 ): Promise<{ videoCallSessionId: string }> => {
+    console.log("[VideoCall API] Starting video call with conversationId:", conversationId);
+
     const response = await apiClient.post<ApiResponse<{ videoCallSessionId: string }>>(
         `/conversations/${conversationId}/calls`,
         {}
     );
 
+    console.log("[VideoCall API] Start call response:", response.data);
     return validateApiResponse(response, "Failed to start video call");
 };
 

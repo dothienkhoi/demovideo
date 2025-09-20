@@ -267,6 +267,14 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             // Video call event handlers
             connection.on("IncomingCall", (callData: IncomingCallData) => {
                 console.log("[VideoCall] Incoming call received:", callData);
+                console.log("[VideoCall] Current user ID:", user?.id);
+                console.log("[VideoCall] Caller user ID:", callData.caller.userId);
+
+                // Additional check to ensure we're handling the event correctly
+                if (user && user.id === callData.caller.userId) {
+                    console.warn("[VideoCall] Received incoming call for self - this might be an error");
+                }
+
                 safeSetVideoCallState(prev => ({
                     ...prev,
                     isIncomingCall: true,
@@ -423,9 +431,18 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             return Promise.resolve();
         }
 
+        console.log("[VideoCall] Starting call with:", {
+            conversationId,
+            receiverId,
+            receiverName,
+            receiverAvatar,
+            currentUserId: user?.id
+        });
+
         try {
             // Call backend API to start the call
             const result = await startVideoCallSignalR(conversationId);
+            console.log("[VideoCall] Start call API result:", result);
 
             safeSetVideoCallState(prev => ({
                 ...prev,
@@ -453,7 +470,7 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                 'error'
             );
         }
-    }, [videoCallState.isConnected, safeSetVideoCallState, showThrottledNotification]);
+    }, [videoCallState.isConnected, safeSetVideoCallState, showThrottledNotification, user?.id]);
 
     const acceptCall = useCallback(async (sessionId: string) => {
         if (!connectionRef.current || !videoCallState.isConnected) {
