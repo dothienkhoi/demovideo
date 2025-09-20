@@ -4,52 +4,19 @@ This directory contains components for handling direct video calls between two u
 
 ## Components
 
-### 1. IncomingCallModal
-Modal that appears when receiving an incoming video call.
+### 1. VideoCallModal
+Consolidated modal that handles both incoming and outgoing video calls.
 
 **Features:**
-- Animated caller avatar with pulsing ring
-- Accept/Decline buttons with loading states
+- Animated caller/recipient avatar with pulsing ring
+- Accept/Decline buttons for incoming calls with loading states
+- Cancel/End call button for outgoing calls with loading state
+- Call duration timer for connected calls
 - Beautiful gradient design
 - Responsive layout
+- Support for all call statuses (ringing, connecting, connected, declined, missed)
 
-**Props:**
-```typescript
-interface IncomingCallModalProps {
-    isOpen: boolean;
-    callerName: string;
-    callerAvatar?: string;
-    callerId: string;
-    onAccept: () => void;
-    onDecline: () => void;
-    isAccepting?: boolean;
-    isDeclining?: boolean;
-}
-```
-
-### 2. OutgoingCallModal
-Modal that appears when making an outgoing video call.
-
-**Features:**
-- Animated recipient avatar with pulsing ring
-- Cancel button with loading state
-- Call duration timer
-- Beautiful gradient design
-
-**Props:**
-```typescript
-interface OutgoingCallModalProps {
-    isOpen: boolean;
-    recipientName: string;
-    recipientAvatar?: string;
-    recipientId: string;
-    onCancel: () => void;
-    isCancelling?: boolean;
-    callDuration?: number; // in seconds
-}
-```
-
-### 3. DirectVideoCallManager
+### 2. DirectVideoCallManager
 Main component that manages the entire direct video call flow.
 
 **Features:**
@@ -71,15 +38,6 @@ interface DirectVideoCallManagerProps {
     className?: string;
 }
 ```
-
-### 4. DirectVideoCallDemo
-Demo component for testing and showcasing the direct video call UI.
-
-**Features:**
-- Interactive demo of all components
-- Test buttons for incoming/outgoing calls
-- Live call duration timer
-- Feature showcase
 
 ## Usage
 
@@ -105,44 +63,20 @@ import { DirectVideoCallManager } from "@/components/features/video-call";
 ### Standalone Usage
 
 ```typescript
-import { IncomingCallModal, OutgoingCallModal } from "@/components/features/video-call";
+import { VideoCallModal } from "@/components/features/video-call";
 
-// Incoming call
-<IncomingCallModal
-    isOpen={showIncoming}
-    callerName="John Doe"
-    callerAvatar="https://example.com/avatar.jpg"
-    callerId="user-123"
-    onAccept={handleAccept}
-    onDecline={handleDecline}
-    isAccepting={isAccepting}
-    isDeclining={isDeclining}
-/>
-
-// Outgoing call
-<OutgoingCallModal
-    isOpen={showOutgoing}
-    recipientName="Jane Smith"
-    recipientAvatar="https://example.com/avatar.jpg"
-    recipientId="user-456"
-    onCancel={handleCancel}
-    isCancelling={isCancelling}
-    callDuration={callDuration}
-/>
+// The VideoCallModal is automatically connected to the VideoCallSignalRProvider
+// and handles both incoming and outgoing calls based on the context state
+<VideoCallModal />
 ```
-
-## Demo Page
-
-Visit `/video-call-demo` to see all components in action with interactive demos.
 
 ## API Integration
 
 The components are designed to work with the existing video call system:
 
-- Uses `useVideoCallAdmin` hook for video call management
-- Integrates with `createVideoCall` and `joinVideoCall` APIs
-- Opens video call room using `openVideoCall` function
-- Supports LiveKit integration
+- Uses `useVideoCallContext` hook for video call management
+- Integrates with SignalR for real-time call notifications
+- Supports LiveKit integration for video conferencing
 
 ## Styling
 
@@ -155,7 +89,6 @@ All components use:
 
 ## Future Enhancements
 
-- [ ] Real-time call notifications via SignalR
 - [ ] Call history integration
 - [ ] Push notifications for incoming calls
 - [ ] Call quality indicators

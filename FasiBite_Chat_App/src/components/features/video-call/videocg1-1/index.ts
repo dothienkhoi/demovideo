@@ -1,5 +1,4 @@
-// Export direct video call components
-export { IncomingCallModal } from "./IncomingCallModal";
-export { OutgoingCallModal } from "./OutgoingCallModal";
+// Export video call components
 export { DirectVideoCallManager } from "./DirectVideoCallManager";
-export { DirectVideoCallDemo } from "./DirectVideoCallDemo";
+export { VideoCallSignalRWrapper } from "./VideoCallSignalRWrapper";
+export { VideoCallModal } from "./VideoCallModal";

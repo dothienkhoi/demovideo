@@ -107,7 +107,7 @@ export function DirectChatHeader({
               currentUserAvatar={user.avatarUrl || undefined}
             />
           )}
-          
+
           {/* More Options Button */}
           <button
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
