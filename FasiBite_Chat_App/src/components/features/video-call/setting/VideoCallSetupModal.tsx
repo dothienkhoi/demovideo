@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { VideoPreview } from "./VideoPreview";
 import { AudioSettings } from "./AudioSettings";
 import { useMediaDevices } from "@/hooks/useLiveKitMedia";
-import { startVideoCall } from "@/lib/api/customer/video-call";
+import { startVideoCall } from "@/lib/api/customer/video-call-api";
 import { VideoCallSessionData } from "@/types/video-call-api.types";
 import {
     VideoCallSettings,

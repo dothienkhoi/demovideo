@@ -14,10 +14,17 @@ export function formatUtcToIctString(utcDateString?: string | null): string {
     const timeZone = "Asia/Ho_Chi_Minh"; // IANA identifier for UTC+7
     const formatString = "dd/MM/yyyy, HH:mm:ss";
 
+    // Check if the date is valid before formatting
+    const date = new Date(utcDateString);
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date string:", utcDateString);
+      return "Không xác định";
+    }
+
     return formatInTimeZone(utcDateString, timeZone, formatString);
   } catch (error) {
     console.error("Failed to format date:", error);
-    return "Invalid Date";
+    return "Không xác định";
   }
 }
 
@@ -35,10 +42,17 @@ export function formatUtcToIctDate(utcDateString?: string | null): string {
     const timeZone = "Asia/Ho_Chi_Minh";
     const formatString = "dd/MM/yyyy";
 
+    // Check if the date is valid before formatting
+    const date = new Date(utcDateString);
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date string:", utcDateString);
+      return "Không xác định";
+    }
+
     return formatInTimeZone(utcDateString, timeZone, formatString);
   } catch (error) {
     console.error("Failed to format date:", error);
-    return "Invalid Date";
+    return "Không xác định";
   }
 }
 
@@ -56,10 +70,17 @@ export function formatUtcToIctTime(utcDateString?: string | null): string {
     const timeZone = "Asia/Ho_Chi_Minh";
     const formatString = "HH:mm:ss";
 
+    // Check if the date is valid before formatting
+    const date = new Date(utcDateString);
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date string:", utcDateString);
+      return "Không xác định";
+    }
+
     return formatInTimeZone(utcDateString, timeZone, formatString);
   } catch (error) {
     console.error("Failed to format time:", error);
-    return "Invalid Time";
+    return "Không xác định";
   }
 }
 
@@ -70,7 +91,7 @@ export function formatUtcToIctTime(utcDateString?: string | null): string {
  */
 export function formatUtcToIctRelative(utcDateString?: string | null): string {
   if (!utcDateString) {
-    return "";
+    return "Không xác định";
   }
 
   try {
@@ -78,9 +99,20 @@ export function formatUtcToIctRelative(utcDateString?: string | null): string {
     const now = new Date();
     const date = new Date(utcDateString);
 
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date string:", utcDateString);
+      return "Không xác định";
+    }
+
     const diffInMinutes = Math.floor(
       (now.getTime() - date.getTime()) / (1000 * 60)
     );
+
+    // Handle negative differences (future dates)
+    if (diffInMinutes < 0) {
+      return "Vừa xong";
+    }
 
     if (diffInMinutes < 1) {
       return "Vừa xong";
@@ -100,7 +132,7 @@ export function formatUtcToIctRelative(utcDateString?: string | null): string {
     }
   } catch (error) {
     console.error("Failed to format relative date:", error);
-    return "Invalid Date";
+    return "Không xác định";
   }
 }
 
@@ -120,39 +152,56 @@ export function formatDate(utcDateString?: string | null): string {
 export function formatRelativeTime(utcDateString?: string | null): string {
   if (!utcDateString) return "Chưa có hoạt động";
 
-  const date = new Date(utcDateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  try {
+    const date = new Date(utcDateString);
 
-  if (diffInSeconds < 60) {
-    return "Vừa xong";
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date string:", utcDateString);
+      return "Không xác định";
+    }
+
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    // Handle negative differences (future dates)
+    if (diffInSeconds < 0) {
+      return "Vừa xong";
+    }
+
+    if (diffInSeconds < 60) {
+      return "Vừa xong";
+    }
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} phút trước`;
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours} giờ trước`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays} ngày trước`;
+    }
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks} tuần trước`;
+    }
+
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) {
+      return `${diffInMonths} tháng trước`;
+    }
+
+    const diffInYears = Math.floor(diffInDays / 365);
+    return `${diffInYears} năm trước`;
+  } catch (error) {
+    console.error("Failed to format relative time:", error);
+    return "Không xác định";
   }
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes} phút trước`;
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours} giờ trước`;
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) {
-    return `${diffInDays} ngày trước`;
-  }
-
-  const diffInWeeks = Math.floor(diffInDays / 7);
-  if (diffInWeeks < 4) {
-    return `${diffInWeeks} tuần trước`;
-  }
-
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) {
-    return `${diffInMonths} tháng trước`;
-  }
-
-  const diffInYears = Math.floor(diffInDays / 365);
-  return `${diffInYears} năm trước`;
 }

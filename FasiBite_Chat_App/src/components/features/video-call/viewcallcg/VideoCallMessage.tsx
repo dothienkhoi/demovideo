@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { VideoCallSettings } from "@/types/video-call.types";
 import { useMediaDevices } from "@/hooks/useLiveKitMedia";
-import { joinVideoCall } from "@/lib/api/customer/video-call";
+import { joinVideoCall } from "@/lib/api/customer/video-call-api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";

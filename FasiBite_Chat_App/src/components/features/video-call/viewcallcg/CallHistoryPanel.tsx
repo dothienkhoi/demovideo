@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCallHistory } from "@/hooks/useCallHistory";
-import { VideoCallSession } from "@/lib/api/customer/video-call";
-import { formatDistanceToNow } from "date-fns";
+import { VideoCallSession } from "@/types/video-call-api.types";
+import { formatDistanceToNow, format } from "date-fns";
 import { vi } from "date-fns/locale";
 
 interface CallHistoryPanelProps {
@@ -33,9 +33,9 @@ export function CallHistoryPanel({ conversationId, className }: CallHistoryPanel
         return `${hours} giờ ${remainingMinutes} phút`;
     };
 
-    const formatDateTime = (dateString: string): string => {
-        const date = new Date(dateString);
-        return date.toLocaleString('vi-VN', {
+    const formatDateTime = (date: Date | string): string => {
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        return dateObj.toLocaleString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -144,15 +144,15 @@ export function CallHistoryPanel({ conversationId, className }: CallHistoryPanel
                             <div
                                 key={call.videoCallSessionId}
                                 className={`p-3 rounded-lg border transition-all duration-200 ${isActive
-                                        ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-800"
-                                        : "bg-muted/30 border-border hover:bg-muted/50"
+                                    ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 dark:from-green-950/20 dark:to-emerald-950/20 dark:border-green-800"
+                                    : "bg-muted/30 border-border hover:bg-muted/50"
                                     }`}
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-start gap-3 flex-1">
                                         <div className={`p-2 rounded-lg ${isActive
-                                                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                                : "bg-muted text-muted-foreground"
+                                            ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                            : "bg-muted text-muted-foreground"
                                             }`}>
                                             <Video className="w-4 h-4" />
                                         </div>

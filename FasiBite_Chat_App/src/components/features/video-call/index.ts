@@ -22,6 +22,11 @@ export { StartVideoCallButton } from "./viewcallcg/StartVideoCallButton";
 // Export direct video call components (SignalR version)
 export { DirectVideoCallManager } from "./videocg1-1/DirectVideoCallManager";
 
+// Export direct video call components (SignalR + LiveKit UI)
+export { VideoCallModal } from "./videocg1-1/VideoCallModal";
+export { ChatHeaderWithVideoCall } from "./videocg1-1/ChatHeaderWithVideoCall";
+export { VideoCallInterface1v1 } from "./videocg1-1/VideoCallInterface1v1";
+
 // Export hooks
 export { useLiveKitMedia, useMediaDevices, useCamera, useMicrophone } from "@/hooks/useLiveKitMedia";
 export { useVideoCallAdmin } from "@/hooks/useVideoCallAdmin";

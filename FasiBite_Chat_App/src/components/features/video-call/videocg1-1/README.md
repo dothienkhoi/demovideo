@@ -1,96 +1,145 @@
-# Direct Video Call Components (1-1)
+# Video Call Components (SignalR Only)
 
-This directory contains components for handling direct video calls between two users in a 1-on-1 conversation.
+## Tổng quan
 
-## Components
+Thư mục `videocg1-1` đã được cập nhật để **chỉ sử dụng SignalR** cho phần thời gian thực, **đã loại bỏ hoàn toàn phần giao diện LiveKit**.
 
-### 1. VideoCallModal
-Consolidated modal that handles both incoming and outgoing video calls.
+## Các file còn lại
 
-**Features:**
-- Animated caller/recipient avatar with pulsing ring
-- Accept/Decline buttons for incoming calls with loading states
-- Cancel/End call button for outgoing calls with loading state
-- Call duration timer for connected calls
-- Beautiful gradient design
-- Responsive layout
-- Support for all call statuses (ringing, connecting, connected, declined, missed)
+### ✅ **Các component được giữ lại:**
 
-### 2. DirectVideoCallManager
-Main component that manages the entire direct video call flow.
+1. **DirectVideoCallManager.tsx**
+   - Quản lý việc bắt đầu cuộc gọi video
+   - Sử dụng SignalR để giao tiếp với backend
+   - Hiển thị nút gọi video trong chat header
 
-**Features:**
-- Video call button integration
-- State management for incoming/outgoing calls
-- Integration with existing video call system
-- Test functionality for development
+2. **VideoCallModal.tsx**
+   - Modal hiển thị cuộc gọi đến/đi
+   - Xử lý accept/decline/end call
+   - Sử dụng SignalR context để quản lý trạng thái
 
-**Props:**
-```typescript
-interface DirectVideoCallManagerProps {
-    conversationId: number;
-    partnerId: string;
-    partnerName: string;
-    partnerAvatar?: string;
-    currentUserId: string;
-    currentUserName: string;
-    currentUserAvatar?: string;
-    className?: string;
-}
+3. **ChatHeaderWithVideoCall.tsx**
+   - Header chat với nút gọi video
+   - Tích hợp DirectVideoCallManager
+   - Hiển thị thông tin người dùng và trạng thái
+
+4. **index.ts**
+   - Export các component cần thiết
+   - Đã loại bỏ export của LiveKit components
+
+## Các file đã bị xóa
+
+### ❌ **Các file LiveKit UI đã bị xóa:**
+
+1. **VideoCallInterface.tsx** - Giao diện LiveKit chính
+2. **VideoCallInterfaceWrapper.tsx** - Wrapper cho LiveKit interface
+3. **ConnectionSyncIndicator.tsx** - Indicator trạng thái kết nối LiveKit
+4. **test-connection.js** - Script test LiveKit connection
+5. **CONNECTION_STABILITY_FIX.md** - Tài liệu sửa lỗi LiveKit
+6. **SYNC_IMPROVEMENTS.md** - Tài liệu cải tiến đồng bộ LiveKit
+7. **VIDEO_CALL_IMPROVEMENTS.md** - Tài liệu cải tiến LiveKit
+
+## Chức năng còn lại
+
+### ✅ **SignalR Functionality (Giữ nguyên):**
+
+1. **Call Management:**
+   - Bắt đầu cuộc gọi video
+   - Chấp nhận/từ chối cuộc gọi
+   - Kết thúc cuộc gọi
+   - Quản lý trạng thái cuộc gọi
+
+2. **Real-time Communication:**
+   - Kết nối SignalR Hub
+   - Nhận thông báo cuộc gọi đến
+   - Gửi tín hiệu accept/decline/end
+   - Auto-reconnect khi mất kết nối
+
+3. **UI Components:**
+   - Modal cuộc gọi với thông tin người gọi
+   - Nút gọi video trong chat header
+   - Hiển thị trạng thái cuộc gọi
+   - Timer cuộc gọi
+
+## Cách sử dụng
+
+### 1. **Trong Chat Header:**
+```tsx
+import { ChatHeaderWithVideoCall } from "@/components/features/video-call/videocg1-1";
+
+<ChatHeaderWithVideoCall
+    conversationId={conversationId}
+    receiverId={receiverId}
+    receiverName={receiverName}
+    receiverAvatar={receiverAvatar}
+    onBack={() => router.back()}
+/>
 ```
 
-## Usage
-
-### Integration in DirectChatHeader
-
-```typescript
-import { DirectVideoCallManager } from "@/components/features/video-call";
-
-// In your DirectChatHeader component
-{conversationType === ConversationType.Direct && partner && user && (
-    <DirectVideoCallManager
-        conversationId={conversationId}
-        partnerId={partner.userId}
-        partnerName={displayName}
-        partnerAvatar={avatarUrl || undefined}
-        currentUserId={user.id}
-        currentUserName={user.fullName || "User"}
-        currentUserAvatar={user.avatarUrl || undefined}
-    />
-)}
+### 2. **Trong VideoCallProvider:**
+```tsx
+// VideoCallProvider đã được cập nhật để không render LiveKit UI
+// Chỉ cung cấp SignalR context cho các component
 ```
 
-### Standalone Usage
+### 3. **Sử dụng Context:**
+```tsx
+import { useVideoCallContext } from "@/providers/VideoCallProvider";
 
-```typescript
-import { VideoCallModal } from "@/components/features/video-call";
-
-// The VideoCallModal is automatically connected to the VideoCallSignalRProvider
-// and handles both incoming and outgoing calls based on the context state
-<VideoCallModal />
+const { videoCallState, startCall, acceptCall, declineCall, endCall } = useVideoCallContext();
 ```
 
-## API Integration
+## Lưu ý quan trọng
 
-The components are designed to work with the existing video call system:
+### ⚠️ **Những gì đã thay đổi:**
 
-- Uses `useVideoCallContext` hook for video call management
-- Integrates with SignalR for real-time call notifications
-- Supports LiveKit integration for video conferencing
+1. **Không còn LiveKit UI** - Chỉ còn SignalR functionality
+2. **VideoCallProvider** không còn render VideoCallInterfaceWrapper
+3. **Export trong index.ts** đã được cập nhật
+4. **Tất cả file LiveKit** đã bị xóa
 
-## Styling
+### ✅ **Những gì vẫn hoạt động:**
 
-All components use:
-- Tailwind CSS for styling
-- Shadcn/ui components for consistency
-- Gradient backgrounds and shadows
-- Smooth animations and transitions
-- Responsive design
+1. **SignalR connection** - Kết nối thời gian thực
+2. **Call notifications** - Thông báo cuộc gọi
+3. **Call management** - Quản lý cuộc gọi
+4. **UI components** - Modal và buttons
 
-## Future Enhancements
+## Migration Notes
 
-- [ ] Call history integration
-- [ ] Push notifications for incoming calls
-- [ ] Call quality indicators
-- [ ] Screen sharing support
-- [ ] Call recording functionality
+Nếu bạn cần sử dụng LiveKit UI trong tương lai:
+
+1. **Tạo thư mục mới** cho LiveKit components
+2. **Không sử dụng lại** các file đã bị xóa
+3. **Implement từ đầu** với architecture mới
+4. **Tách biệt** SignalR và LiveKit logic
+
+## Testing
+
+### ✅ **Test các chức năng còn lại:**
+
+1. **SignalR Connection:**
+   - Kết nối/ngắt kết nối
+   - Auto-reconnect
+   - Error handling
+
+2. **Call Flow:**
+   - Start call
+   - Accept/decline call
+   - End call
+   - Call notifications
+
+3. **UI Components:**
+   - Modal hiển thị đúng
+   - Buttons hoạt động
+   - Timer chạy đúng
+   - Avatar và thông tin hiển thị
+
+## Support
+
+Nếu gặp vấn đề sau khi xóa LiveKit UI:
+
+1. **Kiểm tra imports** - Đảm bảo không import file đã bị xóa
+2. **Check VideoCallProvider** - Đảm bảo không còn reference đến LiveKit
+3. **Verify exports** - Kiểm tra index.ts exports đúng
+4. **Test SignalR** - Đảm bảo SignalR vẫn hoạt động

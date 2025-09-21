@@ -9,7 +9,6 @@ import { RecentActivityLists } from "@/components/features/admin/dashboard/Recen
 import { StatsCard } from "@/components/features/admin/dashboard/StatsCard";
 import { DashboardLoadingSkeleton } from "@/components/features/admin/dashboard/DashboardSkeletons";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { SignalRDebugInfo } from "@/components/shared/SignalRDebugInfo";
 import { AdminPageHeader } from "@/components/shared/AdminPageHeader";
 import {
   Users,
@@ -95,8 +94,8 @@ function EnhancedStatsCard({
                 trend === "up"
                   ? "default"
                   : trend === "down"
-                  ? "destructive"
-                  : "secondary"
+                    ? "destructive"
+                    : "secondary"
               }
               className="text-xs"
             >
@@ -376,9 +375,8 @@ export default function AdminDashboardPage() {
                           {isDebugOpen ? "Ẩn" : "Hiển thị"}
                         </span>
                         <ChevronDown
-                          className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
-                            isDebugOpen ? "rotate-180" : ""
-                          }`}
+                          className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isDebugOpen ? "rotate-180" : ""
+                            }`}
                         />
                       </div>
                     </Button>
@@ -386,9 +384,6 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    <div className="bg-background/50 rounded-lg p-4 border border-border/50">
-                      <SignalRDebugInfo />
-                    </div>
                   </CardContent>
                 </CollapsibleContent>
               </Card>

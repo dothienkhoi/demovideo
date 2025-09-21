@@ -15,7 +15,7 @@ import {
     muteParticipantMic,
     stopParticipantVideo,
     removeParticipant
-} from "@/lib/api/customer/video-call";
+} from "@/lib/api/customer/video-call-api";
 import { useVideoCallAdmin } from "@/hooks/useVideoCallAdmin";
 import { useAuthStore } from "@/store/authStore";
 

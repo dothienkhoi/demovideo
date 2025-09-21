@@ -38,8 +38,10 @@ export function VideoCallModal({ }: VideoCallModalProps) {
         isOutgoingCall,
         incomingCallData,
         outgoingCallData,
-        callStatus
+        callStatus,
+        isActive
     } = videoCallState;
+
 
     // Timer for call duration
     useEffect(() => {
@@ -65,8 +67,8 @@ export function VideoCallModal({ }: VideoCallModalProps) {
         }
     }, [callStatus]);
 
-    // Don't render if no active call
-    if ((!isIncomingCall || !incomingCallData) && (!isOutgoingCall || !outgoingCallData)) {
+    // Don't render if no active call or if call is already active
+    if ((!isIncomingCall || !incomingCallData) && (!isOutgoingCall || !outgoingCallData) || isActive) {
         return null;
     }
 
@@ -79,28 +81,32 @@ export function VideoCallModal({ }: VideoCallModalProps) {
 
     // Handle incoming call actions
     const handleAccept = async () => {
-        if (isAccepting || isDeclining || !incomingCallData) return;
+        if (isAccepting || isDeclining || !incomingCallData) {
+            return;
+        }
 
         setIsAccepting(true);
         try {
             await acceptCall(incomingCallData.videoCallSessionId);
             // The context will handle the state update
         } catch (error) {
-            console.error("Failed to accept call:", error);
+            // Handle error silently
         } finally {
             setIsAccepting(false);
         }
     };
 
     const handleDecline = async () => {
-        if (isAccepting || isDeclining || !incomingCallData) return;
+        if (isAccepting || isDeclining || !incomingCallData) {
+            return;
+        }
 
         setIsDeclining(true);
         try {
             await declineCall(incomingCallData.videoCallSessionId);
             clearIncomingCall();
         } catch (error) {
-            console.error("Failed to decline call:", error);
+            // Handle error silently
         } finally {
             setIsDeclining(false);
         }
@@ -108,14 +114,16 @@ export function VideoCallModal({ }: VideoCallModalProps) {
 
     // Handle outgoing call actions
     const handleEndCall = async () => {
-        if (isEnding || !outgoingCallData) return;
+        if (isEnding || !outgoingCallData) {
+            return;
+        }
 
         setIsEnding(true);
         try {
             await endCall(outgoingCallData.sessionId);
             clearOutgoingCall();
         } catch (error) {
-            console.error("Failed to end call:", error);
+            // Handle error silently
         } finally {
             setIsEnding(false);
         }
@@ -157,7 +165,11 @@ export function VideoCallModal({ }: VideoCallModalProps) {
     return (
         <Dialog
             open={isIncomingCall || isOutgoingCall}
-            onOpenChange={handleClose}
+            onOpenChange={(open) => {
+                if (!open) {
+                    handleClose();
+                }
+            }}
         >
             <DialogContent className="bg-card border-border p-8 rounded-2xl shadow-2xl max-w-md z-[9999]">
                 <DialogHeader className="text-center space-y-6">

@@ -9,24 +9,29 @@ import { Button } from "@/components/ui/button";
 export function CameraToggle() {
     const { enabled, toggle, pending } = useTrackToggle({ source: Track.Source.Camera });
 
+    console.log('[CameraToggle] State:', { enabled, pending });
+
     const handleClick = useCallback(async () => {
+        console.log('[CameraToggle] Toggle clicked, current state:', { enabled, pending });
         try {
             await toggle();
+            console.log('[CameraToggle] Toggle completed successfully');
         } catch (error) {
+            console.error('[CameraToggle] Toggle error:', error);
             // Silently handle camera toggle errors
             // Could be due to permissions or hardware issues
         }
-    }, [toggle]);
+    }, [toggle, enabled, pending]);
 
     return (
         <Button
             onClick={handleClick}
             disabled={pending}
             className={`rounded-full w-14 h-14 border-2 transition-all duration-200 transform active:scale-95 ${pending
-                    ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed'
-                    : enabled
-                        ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50'
-                        : 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-400/50 hover:border-red-400'
+                ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed'
+                : enabled
+                    ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50'
+                    : 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-400/50 hover:border-red-400'
                 }`}
             aria-label={enabled ? "Turn off camera" : "Turn on camera"}
         >

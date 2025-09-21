@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Room, RoomOptions, RoomConnectOptions, VideoPresets } from "livekit-client";
 import { RoomContext, VideoConference, formatChatMessageLinks } from "@livekit/components-react";
 import { LogLevel } from "livekit-client";
-import { joinVideoCall, leaveVideoCall } from "@/lib/api/customer/video-call";
+import { joinVideoCall, leaveVideoCall } from "@/lib/api/customer/video-call-api";
 import { Button } from "@/components/ui/button";
 import { X, PhoneOff } from "lucide-react";
 
@@ -21,7 +21,10 @@ export function LiveKitVideoConference({ sessionId, conversationId, onClose, gro
     const [error, setError] = useState<string | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
 
+    console.log("[LiveKitVideoConference] Rendering with props:", { sessionId, conversationId, groupName, userId });
+
     const roomOptions = useMemo((): RoomOptions => {
+        console.log("[LiveKitVideoConference] Creating room options");
         return {
             publishDefaults: {
                 videoSimulcastLayers: [VideoPresets.h540, VideoPresets.h216],
@@ -32,39 +35,54 @@ export function LiveKitVideoConference({ sessionId, conversationId, onClose, gro
         };
     }, []);
 
-    const room = useMemo(() => new Room(roomOptions), [roomOptions]);
+    const room = useMemo(() => {
+        console.log("[LiveKitVideoConference] Creating new Room instance");
+        return new Room(roomOptions);
+    }, [roomOptions]);
 
     const connectOptions = useMemo((): RoomConnectOptions => {
+        console.log("[LiveKitVideoConference] Creating connect options");
         return {
             autoSubscribe: true,
         };
     }, []);
 
     useEffect(() => {
+        console.log("[LiveKitVideoConference] Connection effect triggered");
         let isMounted = true;
 
         const connectToLiveKit = async () => {
             try {
+                console.log("[LiveKitVideoConference] Connecting to LiveKit");
                 setError(null);
                 setIsConnecting(true);
 
                 // Get LiveKit token from backend
+                console.log("[LiveKitVideoConference] Calling joinVideoCall API");
                 const joinResponse = await joinVideoCall(sessionId, conversationId, userId);
+                console.log("[LiveKitVideoConference] joinVideoCall API response:", joinResponse);
 
                 if (isMounted) {
+                    console.log("[LiveKitVideoConference] Connecting to LiveKit room");
                     // Connect to LiveKit room with real token
                     await room.connect(joinResponse.livekitServerUrl, joinResponse.livekitToken, connectOptions);
+                    console.log("[LiveKitVideoConference] Connected to LiveKit room");
 
                     // Enable camera and microphone by default
+                    console.log("[LiveKitVideoConference] Enabling camera and microphone");
                     await room.localParticipant.enableCameraAndMicrophone();
+                    console.log("[LiveKitVideoConference] Camera and microphone enabled");
 
                     setIsConnected(true);
                     setIsConnecting(false);
+                    console.log("[LiveKitVideoConference] Connection state updated: connected");
                 }
             } catch (err) {
+                console.error("[LiveKitVideoConference] Connection error:", err);
                 if (isMounted) {
                     setError(err instanceof Error ? err.message : "Failed to connect to LiveKit room");
                     setIsConnecting(false);
+                    console.log("[LiveKitVideoConference] Connection state updated: error");
                 }
             }
         };
@@ -72,31 +90,42 @@ export function LiveKitVideoConference({ sessionId, conversationId, onClose, gro
         connectToLiveKit();
 
         return () => {
+            console.log("[LiveKitVideoConference] Cleaning up connection effect");
             isMounted = false;
             room.disconnect();
         };
     }, [room, sessionId, connectOptions]);
 
     const handleDisconnect = async () => {
+        console.log("[LiveKitVideoConference] HandleDisconnect called");
         try {
             // Leave the call via backend API
+            console.log("[LiveKitVideoConference] Calling leaveVideoCall API");
             await leaveVideoCall(sessionId);
+            console.log("[LiveKitVideoConference] leaveVideoCall API completed");
         } catch (error) {
+            console.error("[LiveKitVideoConference] Error leaving call:", error);
             // Handle error silently
         } finally {
             // Always disconnect from room and call onClose
+            console.log("[LiveKitVideoConference] Disconnecting from room");
             room.disconnect();
+            console.log("[LiveKitVideoConference] Calling onClose callback");
             onClose();
         }
     };
 
     if (error) {
+        console.log("[LiveKitVideoConference] Rendering error state:", error);
         return (
             <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
                 <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4">
                     <h2 className="text-white text-xl font-semibold mb-4">Lỗi kết nối</h2>
                     <p className="text-gray-300 mb-4">{error}</p>
-                    <Button onClick={onClose} className="w-full">
+                    <Button onClick={() => {
+                        console.log("[LiveKitVideoConference] Close button clicked in error state");
+                        onClose();
+                    }} className="w-full">
                         Đóng
                     </Button>
                 </div>
@@ -105,6 +134,7 @@ export function LiveKitVideoConference({ sessionId, conversationId, onClose, gro
     }
 
     if (isConnecting) {
+        console.log("[LiveKitVideoConference] Rendering connecting state");
         return (
             <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
                 <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4">
@@ -119,6 +149,8 @@ export function LiveKitVideoConference({ sessionId, conversationId, onClose, gro
         );
     }
 
+    console.log("[LiveKitVideoConference] Rendering video conference interface");
+
     return (
         <div className="fixed inset-0 z-50 bg-black">
             {/* Header */}
@@ -129,7 +161,10 @@ export function LiveKitVideoConference({ sessionId, conversationId, onClose, gro
                     </h1>
                     <div className="flex items-center gap-2">
                         <Button
-                            onClick={handleDisconnect}
+                            onClick={() => {
+                                console.log("[LiveKitVideoConference] Leave call button clicked");
+                                handleDisconnect();
+                            }}
                             variant="outline"
                             size="sm"
                             className="text-white border-white hover:bg-white hover:text-black"
@@ -138,7 +173,10 @@ export function LiveKitVideoConference({ sessionId, conversationId, onClose, gro
                             Rời khỏi
                         </Button>
                         <Button
-                            onClick={onClose}
+                            onClick={() => {
+                                console.log("[LiveKitVideoConference] Close button clicked");
+                                handleDisconnect();
+                            }}
                             variant="ghost"
                             size="sm"
                             className="text-white hover:bg-white/20"

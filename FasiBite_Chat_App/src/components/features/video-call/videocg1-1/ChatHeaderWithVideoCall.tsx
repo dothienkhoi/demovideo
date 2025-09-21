@@ -6,8 +6,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Video, Phone, MoreVertical, ArrowLeft } from "lucide-react";
 import { getAvatarGradient, getInitials } from "@/lib/utils/formatters";
-import { StartVideoCallButtonSignalR } from "./StartVideoCallButtonSignalR";
+import { DirectVideoCallManager } from "./DirectVideoCallManager";
 import { useVideoCallContext } from "@/providers/VideoCallProvider";
+import { useAuthStore } from "@/store/authStore";
 
 interface ChatHeaderWithVideoCallProps {
     // Conversation info
@@ -36,6 +37,8 @@ export function ChatHeaderWithVideoCall({
     className = "",
 }: ChatHeaderWithVideoCallProps) {
     const { videoCallState } = useVideoCallContext();
+    const { user } = useAuthStore();
+
 
     const avatarGradient = getAvatarGradient();
     const avatarLetter = getInitials(receiverName);
@@ -58,10 +61,16 @@ export function ChatHeaderWithVideoCall({
         }
     };
 
+    // Determine if video call button should be disabled
+    const isCallButtonDisabled = receiverStatus === 'offline' ||
+        videoCallState.isIncomingCall ||
+        videoCallState.isOutgoingCall ||
+        videoCallState.isActive;
+
+
     return (
         <div className={`flex items-center justify-between p-4 border-b bg-background ${className}`}>
-            {/* Left side - Back button and user info */
-            }
+            {/* Left side - Back button and user info */}
             <div className="flex items-center gap-3">
                 {showBackButton && (
                     <Button
@@ -101,35 +110,43 @@ export function ChatHeaderWithVideoCall({
                             {getStatusText(receiverStatus)}
                         </span>
 
-                        {/* Video call status indicator */}
-                        {videoCallState.isOutgoingCall && videoCallState.outgoingCallData?.receiverId === receiverId && (
-                            <Badge variant="outline" className="text-xs">
-                                <Video className="h-3 w-3 mr-1" />
-                                Đang gọi
-                            </Badge>
-                        )}
+                        {/* Video call status indicator - only show for outgoing calls to this specific user */}
+                        {videoCallState.isOutgoingCall &&
+                            videoCallState.outgoingCallData?.receiverId === receiverId &&
+                            videoCallState.callStatus === 'ringing' && (
+                                <Badge variant="outline" className="text-xs">
+                                    <Video className="h-3 w-3 mr-1" />
+                                    Đang gọi
+                                </Badge>
+                            )}
 
-                        {videoCallState.isIncomingCall && videoCallState.incomingCallData?.caller.userId === receiverId && (
-                            <Badge variant="outline" className="text-xs">
-                                <Phone className="h-3 w-3 mr-1" />
-                                Cuộc gọi đến
-                            </Badge>
-                        )}
+                        {/* Incoming call indicator - only show if this user is calling */}
+                        {videoCallState.isIncomingCall &&
+                            videoCallState.incomingCallData?.caller.userId === receiverId && (
+                                <Badge variant="outline" className="text-xs">
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    Cuộc gọi đến
+                                </Badge>
+                            )}
                     </div>
                 </div>
             </div>
 
             {/* Right side - Action buttons */}
             <div className="flex items-center gap-2">
-                {/* Video call button */}
-                <StartVideoCallButtonSignalR
-                    conversationId={conversationId}
-                    receiverId={receiverId}
-                    receiverName={receiverName}
-                    size="sm"
-                    variant="outline"
-                    disabled={receiverStatus === 'offline'}
-                />
+                {/* Video call button - disable during active calls */}
+                {user && (
+                    <DirectVideoCallManager
+                        conversationId={conversationId}
+                        partnerId={receiverId}
+                        partnerName={receiverName}
+                        partnerAvatar={receiverAvatar}
+                        currentUserId={user.id}
+                        currentUserName={user.fullName}
+                        currentUserAvatar={user.avatarUrl ?? undefined}
+                        className="flex items-center"
+                    />
+                )}
 
                 {/* More options button */}
                 {onMoreOptions && (
@@ -160,9 +177,18 @@ export function ChatHeaderWithVideoCallCompact({
     showBackButton?: boolean;
 }) {
     const { videoCallState } = useVideoCallContext();
+    const { user } = useAuthStore();
+
 
     const avatarGradient = getAvatarGradient();
     const avatarLetter = getInitials(receiverName);
+
+    // Determine if video call button should be disabled
+    const isCallButtonDisabled = receiverStatus === 'offline' ||
+        videoCallState.isIncomingCall ||
+        videoCallState.isOutgoingCall ||
+        videoCallState.isActive;
+
 
     return (
         <div className={`flex items-center justify-between p-3 border-b bg-background ${className}`}>
@@ -198,15 +224,18 @@ export function ChatHeaderWithVideoCallCompact({
             </div>
 
             {/* Right side - Video call button only */}
-            <StartVideoCallButtonSignalR
-                conversationId={conversationId}
-                receiverId={receiverId}
-                receiverName={receiverName}
-                size="sm"
-                variant="ghost"
-                disabled={receiverStatus === 'offline'}
-                className="p-2"
-            />
+            {user && (
+                <DirectVideoCallManager
+                    conversationId={conversationId}
+                    partnerId={receiverId}
+                    partnerName={receiverName}
+                    partnerAvatar={receiverAvatar}
+                    currentUserId={user.id}
+                    currentUserName={user.fullName}
+                    currentUserAvatar={user.avatarUrl ?? undefined}
+                    className="flex items-center"
+                />
+            )}
         </div>
     );
 }

@@ -20,7 +20,7 @@ import { MicrophoneToggle } from "./MicrophoneToggle";
 import { CameraToggle } from "./CameraToggle";
 import { CallEndedScreen } from "./CallEndedScreen";
 import { EndCallButton } from "./EndCallButton";
-import { leaveVideoCall, endVideoCallForAll } from "@/lib/api/customer/video-call";
+import { leaveVideoCall, endVideoCallForAll } from "@/lib/api/customer/video-call-api";
 import { useVideoCallAdmin } from "@/hooks/useVideoCallAdmin";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

@@ -52,7 +52,6 @@ export function DirectVideoCallManager({
             await startCall(conversationId, partnerId, partnerName, partnerAvatar);
             toast.success("Đang gọi...", { description: `Đang gọi ${partnerName}` });
         } catch (error) {
-            console.error("Failed to start video call:", error);
             toast.error("Không thể bắt đầu cuộc gọi", {
                 description: error instanceof Error ? error.message : "Đã có lỗi xảy ra"
             });
@@ -62,7 +61,7 @@ export function DirectVideoCallManager({
     }, [videoCallState.isConnected, videoCallState.isIncomingCall, videoCallState.isOutgoingCall, startCall, conversationId, partnerId, partnerName, partnerAvatar]);
 
     // Check if there's an active call
-    const hasActiveCall = videoCallState.isIncomingCall || videoCallState.isOutgoingCall;
+    const hasActiveCall = videoCallState.isIncomingCall || videoCallState.isOutgoingCall || videoCallState.isActive;
     const isCreating = isStartingCall;
 
     return (

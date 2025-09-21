@@ -37,6 +37,7 @@ export interface JoinVideoCallResponse extends ApiResponse<JoinCallResponseDto> 
  * Video Call Session Types
  */
 export interface VideoCallSession {
+    videoCallSessionId: string;
     sessionId: string;
     conversationId: number;
     livekitToken: string;
@@ -44,6 +45,11 @@ export interface VideoCallSession {
     participants: VideoCallParticipant[];
     isActive: boolean;
     startedAt: Date;
+    endedAt?: Date;
+    initiatorUserId: string;
+    initiatorName: string;
+    participantCount: number;
+    durationInMinutes: number;
 }
 
 export interface VideoCallParticipant {
@@ -79,4 +85,37 @@ export interface VideoCallState {
     isScreenSharing: boolean;
     participants: VideoCallParticipant[];
     localParticipant?: VideoCallParticipant;
+}
+
+/**
+ * Call History Types
+ */
+export interface CallHistoryResponse {
+    success: boolean;
+    message: string;
+    data: VideoCallSession[];
+    errors?: Array<{
+        errorCode: string;
+        message: string;
+    }>;
+    statusCode: number;
+}
+
+export interface VideoCallSessionDetails {
+    sessionId: string;
+    conversationId: number;
+    initiatorUserId: string;
+    initiatorName: string;
+    isActive: boolean;
+    participants: VideoCallAdminParticipant[];
+    createdAt: string;
+}
+
+export interface VideoCallAdminParticipant {
+    userId: string;
+    userName: string;
+    isAdmin: boolean;
+    joinedAt: string;
+    leftAt?: string;
+    isActive: boolean;
 }

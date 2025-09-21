@@ -54,14 +54,15 @@ export function NotificationItem({
   onMarkAsRead,
 }: NotificationItemProps) {
   const handleClick = () => {
-    if (!notification.isRead) {
+    if (!notification?.isRead && notification?.id) {
       onMarkAsRead(notification.id);
     }
   };
 
-  const timeAgo = formatUtcToIctRelative(notification.timestamp);
+  // Safely format the timestamp with fallback
+  const timeAgo = formatUtcToIctRelative(notification?.timestamp);
 
-  const config = notificationConfig[notification.notificationType] || {
+  const config = notificationConfig[notification?.notificationType] || {
     icon: AlertCircle,
     className: "text-muted-foreground",
   };
@@ -71,7 +72,7 @@ export function NotificationItem({
     <div
       className={cn(
         "flex items-start gap-3 p-3 rounded-lg transition-colors cursor-pointer",
-        notification.isRead
+        notification?.isRead
           ? "hover:bg-muted/50"
           : "bg-primary/10 hover:bg-primary/20 dark:bg-primary/10 dark:hover:bg-primary/20"
       )}
@@ -88,16 +89,16 @@ export function NotificationItem({
           <p
             className={cn(
               "text-sm leading-relaxed",
-              notification.isRead
+              notification?.isRead
                 ? "text-muted-foreground"
                 : "text-foreground font-medium"
             )}
           >
-            {notification.message}
+            {notification?.message || "Không có nội dung"}
           </p>
 
           {/* Unread indicator */}
-          {!notification.isRead && (
+          {!notification?.isRead && (
             <div className="flex-shrink-0 w-2 h-2 bg-primary rounded-full mt-2"></div>
           )}
         </div>
@@ -105,7 +106,7 @@ export function NotificationItem({
         {/* Timestamp and triggered by user */}
         <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
           <span>{timeAgo}</span>
-          {notification.triggeredByUserName && (
+          {notification?.triggeredByUserName && (
             <>
               <span>•</span>
               <span>by {notification.triggeredByUserName}</span>
@@ -117,7 +118,7 @@ export function NotificationItem({
   );
 
   // Wrap in Link if linkTo is provided
-  if (notification.linkTo) {
+  if (notification?.linkTo) {
     return (
       <Link href={notification.linkTo} className="block" legacyBehavior={false}>
         {content}

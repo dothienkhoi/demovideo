@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
     checkAdminStatus,
     getVideoCallSessionDetails,
-    VideoCallSessionDetails,
-    VideoCallAdminParticipant,
     startVideoCall,
     joinVideoCallSession
-} from "@/lib/api/customer/video-call";
+} from "@/lib/api/customer/video-call-api";
+import {
+    VideoCallSessionDetails,
+    VideoCallAdminParticipant
+} from "@/types/video-call-api.types";
 import { VideoCallSessionData } from "@/types/video-call-api.types";
 import { useAuthStore } from "@/store/authStore";
 

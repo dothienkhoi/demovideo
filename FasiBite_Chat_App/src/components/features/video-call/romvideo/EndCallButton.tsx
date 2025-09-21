@@ -3,7 +3,7 @@
 import React from "react";
 import { PhoneOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { leaveVideoCall } from "@/lib/api/customer/video-call";
+import { leaveVideoCall } from "@/lib/api/customer/video-call-api";
 
 interface EndCallButtonProps {
     sessionId: string;

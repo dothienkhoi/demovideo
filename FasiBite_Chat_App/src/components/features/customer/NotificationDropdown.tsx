@@ -32,12 +32,12 @@ function NotificationItem({
   isMarkingAsRead,
 }: NotificationItemProps) {
   const handleClick = () => {
-    if (!notification.isRead) {
+    if (!notification?.isRead && notification?.id) {
       onMarkAsRead(notification.id);
     }
 
     // Navigate to the link if provided
-    if (notification.linkTo) {
+    if (notification?.linkTo) {
       window.location.href = notification.linkTo;
     }
   };
@@ -71,25 +71,23 @@ function NotificationItem({
 
   return (
     <div
-      className={`group relative p-4 transition-all duration-300 cursor-pointer border-l-4 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-purple-500/5 ${
-        !notification.isRead
+      className={`group relative p-4 transition-all duration-300 cursor-pointer border-l-4 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-purple-500/5 ${!notification?.isRead
           ? "bg-gradient-to-r from-blue-500/10 to-purple-500/5 border-blue-500 hover:border-blue-600"
           : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
-      }`}
+        }`}
       onClick={handleClick}
     >
       <div className="flex items-start gap-3">
         {/* Enhanced Icon */}
         <div className="flex-shrink-0">
           <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-md transition-all duration-300 group-hover:scale-110 ${
-              !notification.isRead
+            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-md transition-all duration-300 group-hover:scale-110 ${!notification?.isRead
                 ? "bg-gradient-to-br from-blue-500 to-purple-600 shadow-blue-500/25"
                 : "bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-400/25"
-            }`}
+              }`}
           >
             <span className="filter drop-shadow-sm">
-              {getNotificationIcon(notification.notificationType)}
+              {getNotificationIcon(notification?.notificationType || "default")}
             </span>
           </div>
         </div>
@@ -100,15 +98,14 @@ function NotificationItem({
               {/* Enhanced Title */}
               <div className="flex items-center gap-2">
                 <h4
-                  className={`text-sm font-medium leading-tight ${
-                    !notification.isRead
+                  className={`text-sm font-medium leading-tight ${!notification?.isRead
                       ? "font-semibold text-blue-600 dark:text-blue-400"
                       : "text-gray-700 dark:text-gray-200"
-                  }`}
+                    }`}
                 >
-                  {notification.title}
+                  {notification?.title || "Không có tiêu đề"}
                 </h4>
-                {!notification.isRead && (
+                {!notification?.isRead && (
                   <div className="relative">
                     <div className="absolute inset-0 w-2 h-2 bg-blue-500 rounded-full animate-ping opacity-75"></div>
                     <div className="relative w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -118,7 +115,7 @@ function NotificationItem({
 
               {/* Enhanced Message */}
               <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
-                {notification.message}
+                {notification?.message || "Không có nội dung"}
               </p>
 
               {/* Enhanced Metadata */}
@@ -126,13 +123,24 @@ function NotificationItem({
                 <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                   <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
                   <span className="font-medium">
-                    {formatDistanceToNow(new Date(notification.timestamp), {
-                      addSuffix: true,
-                      locale: vi,
-                    })}
+                    {(() => {
+                      try {
+                        const date = new Date(notification.timestamp);
+                        if (isNaN(date.getTime())) {
+                          return "Không xác định";
+                        }
+                        return formatDistanceToNow(date, {
+                          addSuffix: true,
+                          locale: vi,
+                        });
+                      } catch (error) {
+                        console.warn("Failed to format notification timestamp:", error);
+                        return "Không xác định";
+                      }
+                    })()}
                   </span>
                 </div>
-                {notification.triggeredByUserName && (
+                {notification?.triggeredByUserName && (
                   <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                     <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
                     <span className="font-medium">
@@ -144,7 +152,7 @@ function NotificationItem({
             </div>
 
             {/* Enhanced Mark as Read Button */}
-            {!notification.isRead && (
+            {!notification?.isRead && (
               <div className="flex-shrink-0 ml-2">
                 <Button
                   size="sm"
@@ -152,7 +160,9 @@ function NotificationItem({
                   className="h-7 w-7 p-0 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onMarkAsRead(notification.id);
+                    if (notification?.id) {
+                      onMarkAsRead(notification.id);
+                    }
                   }}
                   disabled={isMarkingAsRead}
                 >

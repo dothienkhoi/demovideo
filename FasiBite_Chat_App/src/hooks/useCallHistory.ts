@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { getCallHistory, VideoCallSession } from "@/lib/api/customer/video-call";
+import { getCallHistory } from "@/lib/api/customer/video-call-api";
+import { VideoCallSession } from "@/types/video-call-api.types";
 
 interface UseCallHistoryProps {
     conversationId: number;

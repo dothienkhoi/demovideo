@@ -11,7 +11,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Users } from "lucide-react";
-import { endVideoCallForAll } from "@/lib/api/customer/video-call";
+import { endVideoCallForAll } from "@/lib/api/customer/video-call-api";
 
 interface EndCallForAllModalProps {
     isOpen: boolean;

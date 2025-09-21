@@ -8,16 +8,18 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { throttle } from "lodash-es";
-import { LiveKitVideoConference } from "@/components/features/video-call/romvideo/LiveKitVideoConference";
-import { VideoCallMinimized } from "@/components/features/video-call/setting/VideoCallMinimized";
+import { useRouter } from "next/navigation";
 import { VideoCallSessionData } from "@/types/video-call-api.types";
 import { VideoCallSettings } from "@/types/video-call.types";
 import {
     startVideoCallSignalR,
     acceptVideoCallSignalR,
     declineVideoCallSignalR,
-    leaveVideoCallSignalR
+    leaveVideoCallSignalR,
+    joinVideoCall,
+    startVideoCall
 } from "@/lib/api/customer/video-call-api";
+import { VideoCallInterface1v1 } from "@/components/features/video-call/videocg1-1/VideoCallInterface1v1";
 
 // Types for video call
 interface IncomingCallData {
@@ -64,6 +66,24 @@ interface VideoCallState {
     conversationId: number | null;
     groupName: string;
     settings: VideoCallSettings | null;
+
+    // Caller profile for active calls
+    callerProfile: {
+        userId: string;
+        fullName: string;
+        avatarUrl?: string;
+    } | null;
+
+    // Navigation data for URL routing
+    navigationData: {
+        conversationId: number;
+        sessionId: string;
+        partnerId: string;
+        partnerName: string;
+        partnerAvatar: string;
+        token: string;
+        serverUrl: string;
+    } | null;
 }
 
 interface VideoCallContextType {
@@ -107,6 +127,7 @@ interface VideoCallProviderProps {
 
 export function VideoCallProvider({ children }: VideoCallProviderProps) {
     const { accessToken, isAuthenticated, user } = useAuthStore();
+    const router = useRouter();
     const connectionRef = useRef<HubConnection | null>(null);
     const isConnectingRef = useRef<boolean>(false);
     const isMountedRef = useRef<boolean>(true);
@@ -131,6 +152,12 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
         conversationId: null,
         groupName: "",
         settings: null,
+
+        // Caller profile for active calls
+        callerProfile: null,
+
+        // Navigation data for URL routing
+        navigationData: null,
     });
 
     // Safe setState function
@@ -163,28 +190,13 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
 
     // Connection methods
     const connect = useCallback(async () => {
-        console.log("[VideoCall] Connect called with:", {
-            hasConnection: !!connectionRef.current,
-            isConnecting: isConnectingRef.current,
-            isAuthenticated,
-            hasAccessToken: !!accessToken,
-            hasUser: !!user,
-            isMounted: isMountedRef.current
-        });
-
         // Only attempt connection if user is authenticated and all required data is available
         if (!isAuthenticated || !accessToken || !user) {
-            console.log("[VideoCall] Connect skipped - user not authenticated");
             return Promise.resolve();
         }
 
         // Prevent duplicate connections
         if (connectionRef.current || isConnectingRef.current || !isMountedRef.current) {
-            console.log("[VideoCall] Connect skipped due to existing connection or component unmounted:", {
-                hasConnection: !!connectionRef.current,
-                isConnecting: isConnectingRef.current,
-                isMounted: isMountedRef.current
-            });
             return Promise.resolve();
         }
 
@@ -195,16 +207,9 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             const baseUrl = apiBaseUrl.endsWith("/") ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
             const hubUrl = `${baseUrl}/hubs/videocall`;
 
-            console.log(`[VideoCall] API Base URL: ${apiBaseUrl}`);
-            console.log(`[VideoCall] Cleaned Base URL: ${baseUrl}`);
-            console.log(`[VideoCall] Hub URL: ${hubUrl}`);
-
-            console.log(`[VideoCall] Connecting to: ${hubUrl}`);
-
             const connection = new HubConnectionBuilder()
                 .withUrl(hubUrl, {
                     accessTokenFactory: () => {
-                        console.log(`[VideoCall] Access token factory called, token: ${accessToken ? "Present" : "Missing"}`);
                         return accessToken || "";
                     },
                     withCredentials: true,
@@ -213,10 +218,11 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                     nextRetryDelayInMilliseconds: (retryContext) => {
                         const retryCount = retryContext.previousRetryCount;
                         if (retryCount === 0) return 0;
-                        if (retryCount === 1) return 2000;
-                        if (retryCount === 2) return 5000;
-                        if (retryCount <= 10) return 10000;
-                        return null;
+                        if (retryCount === 1) return 1000;
+                        if (retryCount === 2) return 2000;
+                        if (retryCount === 3) return 5000;
+                        if (retryCount <= 8) return 10000;
+                        return 15000; // Continue trying but with longer delays
                     },
                 })
                 .configureLogging("Information")
@@ -225,27 +231,10 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             connectionRef.current = connection;
 
             // Connection event handlers
-            connection.onclose((error: Error | undefined) => {
-                if (error) {
-                    console.error("[VideoCall] Connection closed with error:", error);
-                    safeSetVideoCallState(prev => ({
-                        ...prev,
-                        isConnected: false,
-                        connectionError: error.message,
-                    }));
-                    showThrottledNotification("Mất kết nối video call", "Kết nối thời gian thực bị gián đoạn", 'error');
-                } else {
-                    console.log("[VideoCall] Connection closed gracefully");
-                    safeSetVideoCallState(prev => ({
-                        ...prev,
-                        isConnected: false,
-                        connectionError: null,
-                    }));
-                }
-            });
 
             connection.onreconnecting((error: Error | undefined) => {
-                console.warn("[VideoCall] Reconnecting...", error);
+                if (!isMountedRef.current) return;
+
                 safeSetVideoCallState(prev => ({
                     ...prev,
                     isConnected: false,
@@ -255,7 +244,8 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             });
 
             connection.onreconnected((connectionId?: string) => {
-                console.log("[VideoCall] Reconnected successfully with ID:", connectionId);
+                if (!isMountedRef.current) return;
+
                 safeSetVideoCallState(prev => ({
                     ...prev,
                     isConnected: true,
@@ -264,16 +254,39 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                 showThrottledNotification("Đã khôi phục kết nối", "Kết nối video call đã được khôi phục", 'success');
             });
 
+            // Handle connection errors
+            connection.onclose((error: Error | undefined) => {
+                if (!isMountedRef.current) return;
+
+                if (error) {
+                    console.error("[VideoCallProvider] Connection closed with error:", error);
+                    safeSetVideoCallState(prev => ({
+                        ...prev,
+                        isConnected: false,
+                        connectionError: error.message,
+                    }));
+
+                    // Only show error notification for unexpected disconnections
+                    if (error.message !== "The connection was closed.") {
+                        showThrottledNotification("Mất kết nối video call", `Lỗi: ${error.message}`, 'error');
+                    }
+                } else {
+                    safeSetVideoCallState(prev => ({
+                        ...prev,
+                        isConnected: false,
+                        connectionError: null,
+                    }));
+                }
+            });
+
             // Video call event handlers
             connection.on("IncomingCall", (callData: IncomingCallData) => {
-                console.log("[VideoCall] Incoming call received:", callData);
-                console.log("[VideoCall] Current user ID:", user?.id);
-                console.log("[VideoCall] Caller user ID:", callData.caller.userId);
-
                 // Additional check to ensure we're handling the event correctly
                 if (user && user.id === callData.caller.userId) {
-                    console.warn("[VideoCall] Received incoming call for self - this might be an error");
+                    return;
                 }
+
+                if (!isMountedRef.current) return;
 
                 safeSetVideoCallState(prev => ({
                     ...prev,
@@ -290,23 +303,104 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             });
 
             connection.on("CallAccepted", (sessionId: string, acceptedBy: UserProfileDto) => {
-                console.log("[VideoCall] Call accepted:", sessionId, acceptedBy);
-                safeSetVideoCallState(prev => ({
-                    ...prev,
-                    isOutgoingCall: false,
-                    outgoingCallData: null,
+                if (!isMountedRef.current) return;
+
+                console.log("[VideoCallProvider] Call accepted by:", acceptedBy.fullName, "Session:", sessionId);
+
+                // For the caller (User A), we need to get updated session data with LiveKit credentials
+                let conversationId: number | null = null;
+                let outgoingData: any = null;
+                let sessionData: any = null;
+
+                safeSetVideoCallState(prev => {
+                    console.log("[VideoCallProvider] CallAccepted - Current state:", {
+                        callStatus: prev.callStatus,
+                        isActive: prev.isActive,
+                        outgoingCallData: prev.outgoingCallData,
+                        sessionData: prev.sessionData
+                    });
+
+                    // Prevent multiple connections
+                    if (prev.callStatus === 'connected') {
+                        console.log("[VideoCallProvider] Call already connected, ignoring duplicate accept");
+                        return prev;
+                    }
+
+                    conversationId = prev.outgoingCallData?.conversationId || null;
+                    outgoingData = prev.outgoingCallData;
+                    sessionData = prev.sessionData;
+
+                    const newState = {
+                        ...prev,
+                        isOutgoingCall: false,
+                        outgoingCallData: null,
+                        callStatus: 'connected' as const,
+                        // Keep existing sessionData with LiveKit credentials from the initial call
+                        sessionData: prev.sessionData,
+                        // Set navigationData with LiveKit credentials for VideoCallInterface1v1
+                        navigationData: prev.sessionData ? {
+                            conversationId: prev.outgoingCallData?.conversationId || 0,
+                            sessionId: sessionId,
+                            partnerId: prev.outgoingCallData?.receiverId || '',
+                            partnerName: prev.outgoingCallData?.receiverName || '',
+                            partnerAvatar: prev.outgoingCallData?.receiverAvatar || '',
+                            token: prev.sessionData.livekitToken,
+                            serverUrl: prev.sessionData.livekitServerUrl,
+                        } : null,
+                        // Set conversationId from outgoingCallData
+                        conversationId: prev.outgoingCallData?.conversationId || null,
+                        // Set caller profile from outgoingCallData
+                        callerProfile: prev.outgoingCallData ? {
+                            userId: prev.outgoingCallData.receiverId,
+                            fullName: prev.outgoingCallData.receiverName,
+                            avatarUrl: prev.outgoingCallData.receiverAvatar,
+                        } : null,
+                        isActive: true, // Activate the video call interface for the caller
+                    };
+
+                    console.log("[VideoCallProvider] CallAccepted - New state:", {
+                        callStatus: newState.callStatus,
+                        isActive: newState.isActive,
+                        callerProfile: newState.callerProfile,
+                        navigationData: newState.navigationData
+                    });
+
+                    return newState;
+                });
+
+                console.log("[VideoCallProvider] Call accepted state set:", {
                     callStatus: 'connected',
-                }));
+                    isActive: true,
+                    callerProfile: outgoingData ? {
+                        userId: outgoingData.receiverId,
+                        fullName: outgoingData.receiverName,
+                        avatarUrl: outgoingData.receiverAvatar,
+                    } : null,
+                    sessionData: sessionData
+                });
 
                 showThrottledNotification(
                     "Cuộc gọi được chấp nhận",
                     `${acceptedBy.fullName} đã chấp nhận cuộc gọi`,
                     'success'
                 );
+
+                // Navigate to video call page for the caller
+                if (conversationId && sessionData && outgoingData) {
+                    const videoCallUrl = `/chat/conversations/${conversationId}/${sessionId}?` +
+                        `partnerId=${encodeURIComponent(outgoingData.receiverId || '')}&` +
+                        `partnerName=${encodeURIComponent(outgoingData.receiverName || '')}&` +
+                        `partnerAvatar=${encodeURIComponent(outgoingData.receiverAvatar || '')}&` +
+                        `token=${encodeURIComponent(sessionData.livekitToken)}&` +
+                        `serverUrl=${encodeURIComponent(sessionData.livekitServerUrl)}`;
+
+                    router.push(videoCallUrl);
+                }
             });
 
             connection.on("CallDeclined", (sessionId: string) => {
-                console.log("[VideoCall] Call declined:", sessionId);
+                if (!isMountedRef.current) return;
+
                 safeSetVideoCallState(prev => ({
                     ...prev,
                     isOutgoingCall: false,
@@ -322,7 +416,8 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             });
 
             connection.on("CallMissed", (sessionId: string) => {
-                console.log("[VideoCall] Call missed:", sessionId);
+                if (!isMountedRef.current) return;
+
                 safeSetVideoCallState(prev => ({
                     ...prev,
                     isOutgoingCall: false,
@@ -338,7 +433,8 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             });
 
             connection.on("CallEnded", (sessionId: string) => {
-                console.log("[VideoCall] Call ended:", sessionId);
+                if (!isMountedRef.current) return;
+
                 safeSetVideoCallState(prev => ({
                     ...prev,
                     isIncomingCall: false,
@@ -351,6 +447,7 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                     conversationId: null,
                     groupName: "",
                     settings: null,
+                    callerProfile: null, // Clear caller profile
                 }));
 
                 showThrottledNotification(
@@ -361,9 +458,9 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             });
 
             // Start connection
-            console.log("[VideoCall] Starting connection...");
             await connection.start();
-            console.log("[VideoCall] Connection started successfully!");
+
+            if (!isMountedRef.current) return;
 
             safeSetVideoCallState(prev => ({
                 ...prev,
@@ -371,11 +468,11 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                 connectionError: null,
             }));
 
-            console.log("[VideoCall] Successfully connected to VideoCallHub");
             showThrottledNotification("Đã kết nối video call", "Sẵn sàng nhận cuộc gọi video", 'success');
 
         } catch (error) {
-            console.error("[VideoCall] Connection failed:", error);
+            if (!isMountedRef.current) return;
+
             safeSetVideoCallState(prev => ({
                 ...prev,
                 isConnected: false,
@@ -397,20 +494,26 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
 
     const disconnect = useCallback(async () => {
         if (connectionRef.current) {
-            console.log("[VideoCall] Disconnecting from VideoCallHub...");
-            await connectionRef.current.stop();
-            connectionRef.current = null;
+            try {
+                await connectionRef.current.stop();
+            } catch (error) {
+                console.error("[VideoCallProvider] Error disconnecting:", error);
+            } finally {
+                connectionRef.current = null;
 
-            safeSetVideoCallState(prev => ({
-                ...prev,
-                isConnected: false,
-                connectionError: null,
-                isIncomingCall: false,
-                isOutgoingCall: false,
-                incomingCallData: null,
-                outgoingCallData: null,
-                callStatus: 'idle',
-            }));
+                if (isMountedRef.current) {
+                    safeSetVideoCallState(prev => ({
+                        ...prev,
+                        isConnected: false,
+                        connectionError: null,
+                        isIncomingCall: false,
+                        isOutgoingCall: false,
+                        incomingCallData: null,
+                        outgoingCallData: null,
+                        callStatus: 'idle',
+                    }));
+                }
+            }
         }
         return Promise.resolve();
     }, [safeSetVideoCallState]);
@@ -431,18 +534,16 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             return Promise.resolve();
         }
 
-        console.log("[VideoCall] Starting call with:", {
-            conversationId,
-            receiverId,
-            receiverName,
-            receiverAvatar,
-            currentUserId: user?.id
-        });
+        // Prevent multiple outgoing calls
+        if (videoCallState.isOutgoingCall) {
+            return Promise.resolve();
+        }
 
         try {
             // Call backend API to start the call
             const result = await startVideoCallSignalR(conversationId);
-            console.log("[VideoCall] Start call API result:", result);
+
+            if (!isMountedRef.current) return;
 
             safeSetVideoCallState(prev => ({
                 ...prev,
@@ -455,6 +556,15 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                     receiverAvatar,
                 },
                 callStatus: 'ringing',
+                // Set session data when starting a new call - now includes LiveKit credentials
+                sessionData: result,
+                // Set caller profile for the callee
+                callerProfile: {
+                    userId: receiverId,
+                    fullName: receiverName,
+                    avatarUrl: receiverAvatar,
+                },
+                isActive: false,
             }));
 
             showThrottledNotification(
@@ -463,14 +573,13 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                 'info'
             );
         } catch (error) {
-            console.error("[VideoCall] Failed to start call:", error);
             showThrottledNotification(
                 "Không thể bắt đầu cuộc gọi",
                 error instanceof Error ? error.message : "Đã có lỗi xảy ra",
                 'error'
             );
         }
-    }, [videoCallState.isConnected, safeSetVideoCallState, showThrottledNotification, user?.id]);
+    }, [videoCallState.isConnected, videoCallState.isOutgoingCall, safeSetVideoCallState, showThrottledNotification, user?.id]);
 
     const acceptCall = useCallback(async (sessionId: string) => {
         if (!connectionRef.current || !videoCallState.isConnected) {
@@ -478,15 +587,56 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             return Promise.resolve();
         }
 
+        // Prevent multiple calls to acceptCall
+        if (videoCallState.callStatus === 'connected') {
+            console.log("[VideoCallProvider] Call already connected, ignoring accept");
+            return Promise.resolve();
+        }
+
+        console.log("[VideoCallProvider] Accepting call with session:", sessionId);
+
         try {
             const result = await acceptVideoCallSignalR(sessionId);
 
-            safeSetVideoCallState(prev => ({
-                ...prev,
-                isIncomingCall: false,
-                incomingCallData: null,
-                callStatus: 'connected',
-            }));
+            if (!isMountedRef.current) return;
+
+            console.log("[VideoCallProvider] Call accepted successfully, setting state");
+
+            let conversationId: number | null = null;
+            let callerData: any = null;
+
+            safeSetVideoCallState(prev => {
+                conversationId = prev.incomingCallData?.conversationId || null;
+                callerData = prev.incomingCallData?.caller;
+
+                return {
+                    ...prev,
+                    isIncomingCall: false, // Close the incoming call modal
+                    incomingCallData: null,
+                    callStatus: 'connected',
+                    // Set session data when call is accepted with LiveKit credentials
+                    sessionData: {
+                        videoCallSessionId: sessionId,
+                        livekitToken: result.livekitToken,
+                        livekitServerUrl: result.livekitServerUrl,
+                    },
+                    // Set navigationData with LiveKit credentials for VideoCallInterface1v1
+                    navigationData: {
+                        conversationId: prev.incomingCallData?.conversationId || 0,
+                        sessionId: sessionId,
+                        partnerId: prev.incomingCallData?.caller.userId || '',
+                        partnerName: prev.incomingCallData?.caller.fullName || '',
+                        partnerAvatar: prev.incomingCallData?.caller.avatarUrl || '',
+                        token: result.livekitToken,
+                        serverUrl: result.livekitServerUrl,
+                    },
+                    // Set conversationId from incomingCallData
+                    conversationId: prev.incomingCallData?.conversationId || null,
+                    // Set caller profile from incomingCallData
+                    callerProfile: prev.incomingCallData?.caller || null,
+                    isActive: true, // Activate the video call interface
+                };
+            });
 
             showThrottledNotification(
                 "Đã chấp nhận cuộc gọi",
@@ -494,17 +644,29 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                 'success'
             );
 
+            // Navigate to video call page
+            if (conversationId && callerData) {
+                const videoCallUrl = `/chat/conversations/${conversationId}/${sessionId}?` +
+                    `partnerId=${encodeURIComponent(callerData.userId || '')}&` +
+                    `partnerName=${encodeURIComponent(callerData.fullName || '')}&` +
+                    `partnerAvatar=${encodeURIComponent(callerData.avatarUrl || '')}&` +
+                    `token=${encodeURIComponent(result.livekitToken)}&` +
+                    `serverUrl=${encodeURIComponent(result.livekitServerUrl)}`;
+
+                router.push(videoCallUrl);
+            }
+
             // Return void to match the context type
             return;
         } catch (error) {
-            console.error("[VideoCall] Failed to accept call:", error);
+            console.error("[VideoCallProvider] Error accepting call:", error);
             showThrottledNotification(
                 "Không thể chấp nhận cuộc gọi",
                 error instanceof Error ? error.message : "Đã có lỗi xảy ra",
                 'error'
             );
         }
-    }, [videoCallState.isConnected, safeSetVideoCallState, showThrottledNotification]);
+    }, [videoCallState.isConnected, videoCallState.callStatus, safeSetVideoCallState, showThrottledNotification]);
 
     const declineCall = useCallback(async (sessionId: string) => {
         if (!connectionRef.current || !videoCallState.isConnected) {
@@ -514,6 +676,8 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
 
         try {
             await declineVideoCallSignalR(sessionId);
+
+            if (!isMountedRef.current) return;
 
             safeSetVideoCallState(prev => ({
                 ...prev,
@@ -528,7 +692,6 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                 'info'
             );
         } catch (error) {
-            console.error("[VideoCall] Failed to decline call:", error);
             showThrottledNotification(
                 "Không thể từ chối cuộc gọi",
                 error instanceof Error ? error.message : "Đã có lỗi xảy ra",
@@ -546,6 +709,8 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
         try {
             await leaveVideoCallSignalR(sessionId);
 
+            if (!isMountedRef.current) return;
+
             safeSetVideoCallState(prev => ({
                 ...prev,
                 isIncomingCall: false,
@@ -558,6 +723,7 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                 conversationId: null,
                 groupName: "",
                 settings: null,
+                callerProfile: null, // Clear caller profile
             }));
 
             showThrottledNotification(
@@ -566,7 +732,6 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
                 'info'
             );
         } catch (error) {
-            console.error("[VideoCall] Failed to end call:", error);
             showThrottledNotification(
                 "Không thể kết thúc cuộc gọi",
                 error instanceof Error ? error.message : "Đã có lỗi xảy ra",
@@ -619,6 +784,7 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
             conversationId: null,
             groupName: "",
             settings: null,
+            callerProfile: null, // Clear caller profile
         }));
     }, [safeSetVideoCallState]);
 
@@ -677,31 +843,76 @@ export function VideoCallProvider({ children }: VideoCallProviderProps) {
         restoreVideoCall,
     };
 
+    const callerProfile = videoCallState.isIncomingCall && videoCallState.incomingCallData
+        ? videoCallState.incomingCallData.caller
+        : videoCallState.isOutgoingCall && videoCallState.outgoingCallData
+            ? {
+                userId: videoCallState.outgoingCallData.receiverId,
+                fullName: videoCallState.outgoingCallData.receiverName,
+                avatarUrl: videoCallState.outgoingCallData.receiverAvatar,
+            }
+            : null;
+
+    // Debug logging for VideoCallInterface1v1 rendering
+    console.log('[VideoCallProvider] Component render - Full state:', {
+        videoCallState: {
+            isActive: videoCallState.isActive,
+            callStatus: videoCallState.callStatus,
+            isIncomingCall: videoCallState.isIncomingCall,
+            isOutgoingCall: videoCallState.isOutgoingCall,
+            incomingCallData: videoCallState.incomingCallData,
+            outgoingCallData: videoCallState.outgoingCallData,
+            navigationData: videoCallState.navigationData,
+            sessionData: videoCallState.sessionData
+        },
+        callerProfile: callerProfile,
+        hasToken: !!(videoCallState.navigationData?.token || videoCallState.sessionData?.livekitToken),
+        hasServerUrl: !!(videoCallState.navigationData?.serverUrl || videoCallState.sessionData?.livekitServerUrl)
+    });
+
     return (
         <VideoCallContext.Provider value={contextValue}>
             {children}
 
-            {/* Video Call Room */}
-            {videoCallState.isActive && videoCallState.sessionData && videoCallState.conversationId && (
-                <LiveKitVideoConference
-                    sessionId={videoCallState.sessionData.videoCallSessionId}
-                    conversationId={videoCallState.conversationId}
-                    groupName={videoCallState.groupName}
-                    userId={user?.id}
-                    onClose={endVideoCall}
-                />
-            )}
-
-            {/* Minimized Video Call */}
-            {!videoCallState.isActive && videoCallState.sessionData && videoCallState.conversationId && (
-                <VideoCallMinimized
-                    sessionData={videoCallState.sessionData}
-                    conversationId={videoCallState.conversationId}
-                    groupName={videoCallState.groupName}
-                    onMaximize={restoreVideoCall}
-                    onEndCall={endVideoCall}
-                />
-            )}
+            {/* Video Call Interface 1v1 - Show when call is active */}
+            {(() => {
+                const shouldRender = videoCallState.isActive && videoCallState.callStatus === 'connected' && callerProfile;
+                console.log('[VideoCallProvider] Render condition check:', {
+                    isActive: videoCallState.isActive,
+                    callStatus: videoCallState.callStatus,
+                    callerProfile: !!callerProfile,
+                    shouldRender: shouldRender
+                });
+                return shouldRender;
+            })() && (
+                    <VideoCallInterface1v1
+                        sessionId={videoCallState.isIncomingCall
+                            ? videoCallState.incomingCallData?.videoCallSessionId || ''
+                            : videoCallState.outgoingCallData?.sessionId || ''
+                        }
+                        conversationId={videoCallState.isIncomingCall
+                            ? videoCallState.incomingCallData?.conversationId || 0
+                            : videoCallState.outgoingCallData?.conversationId || 0
+                        }
+                        partnerId={callerProfile?.userId || ''}
+                        partnerName={callerProfile?.fullName || ''}
+                        partnerAvatar={callerProfile?.avatarUrl}
+                        currentUserName={user?.fullName || ''}
+                        currentUserAvatar={user?.avatarUrl || undefined}
+                        livekitToken={videoCallState.navigationData?.token || videoCallState.sessionData?.livekitToken || ''}
+                        livekitServerUrl={videoCallState.navigationData?.serverUrl || videoCallState.sessionData?.livekitServerUrl || ''}
+                        onEndCall={async () => {
+                            if (videoCallState.isIncomingCall) {
+                                await endCall(videoCallState.incomingCallData?.videoCallSessionId || '');
+                            } else if (videoCallState.isOutgoingCall) {
+                                await endCall(videoCallState.outgoingCallData?.sessionId || '');
+                            }
+                        }}
+                        onMinimize={() => {
+                            // Handle minimize if needed
+                        }}
+                    />
+                )}
         </VideoCallContext.Provider>
     );
 }

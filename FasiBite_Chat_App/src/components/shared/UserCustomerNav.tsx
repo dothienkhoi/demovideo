@@ -246,33 +246,30 @@ export function UserCustomerNav() {
               <Button
                 size="sm"
                 onClick={() => handleStatusChange(UserPresenceStatus.Online)}
-                className={`flex-1 text-xs ${
-                  currentStatus === UserPresenceStatus.Online
+                className={`flex-1 text-xs ${currentStatus === UserPresenceStatus.Online
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-green-500/20 hover:bg-green-500/30 text-green-400"
-                }`}
+                  }`}
               >
                 Online
               </Button>
               <Button
                 size="sm"
                 onClick={() => handleStatusChange(UserPresenceStatus.Busy)}
-                className={`flex-1 text-xs ${
-                  currentStatus === UserPresenceStatus.Busy
+                className={`flex-1 text-xs ${currentStatus === UserPresenceStatus.Busy
                     ? "bg-red-600 hover:bg-red-700"
                     : "bg-red-500/20 hover:bg-red-500/30 text-red-400"
-                }`}
+                  }`}
               >
                 Bận
               </Button>
               <Button
                 size="sm"
                 onClick={() => handleStatusChange(UserPresenceStatus.Absent)}
-                className={`flex-1 text-xs ${
-                  currentStatus === UserPresenceStatus.Absent
+                className={`flex-1 text-xs ${currentStatus === UserPresenceStatus.Absent
                     ? "bg-yellow-600 hover:bg-yellow-700"
                     : "bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400"
-                }`}
+                  }`}
               >
                 Vắng mặt
               </Button>
