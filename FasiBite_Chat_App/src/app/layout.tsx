@@ -5,6 +5,7 @@ import "./globals.css";
 import "@livekit/components-styles";
 import "../styles/video-call.css";
 import { OneSignalInitializer } from "@/components/shared/OneSignalInitializer";
+import { PreloadOptimizer } from "@/components/shared/PreloadOptimizer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +21,10 @@ export const metadata: Metadata = {
   title: "FastBite Group - Team Collaboration Platform",
   description:
     "Real-time collaboration and communication platform for teams and communities",
+  // Optimize resource loading to reduce preload warnings
+  other: {
+    "resource-hints": "preload",
+  },
 };
 
 export default function RootLayout({
@@ -34,6 +39,7 @@ export default function RootLayout({
       >
         <Providers>
           <OneSignalInitializer />
+          <PreloadOptimizer />
           {children}
         </Providers>
       </body>

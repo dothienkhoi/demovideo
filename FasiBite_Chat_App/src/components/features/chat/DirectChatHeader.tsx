@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Phone, Video, MoreVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MoreVertical, Phone, Video } from "lucide-react";
 import {
   ConversationPartnerDto,
   ConversationType,
 } from "@/types/customer/user.types";
 import { UserPresenceStatus } from "@/types/customer/models";
 import { DirectDetailsSheet } from "./DirectDetailsSheet";
-import { DirectVideoCallManager } from "@/components/features/video-call";
 import { useAuthStore } from "@/store/authStore";
+import { useVideoCallContext } from "@/providers/VideoCallProvider";
+import { VideoCallButton, AudioCallButton } from "../video-call/one-to-one";
 
 interface DirectChatHeaderProps {
   conversationId: number;
@@ -28,6 +28,7 @@ export function DirectChatHeader({
 }: DirectChatHeaderProps) {
   const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
   const { user } = useAuthStore();
+  const { startCall, videoCallState } = useVideoCallContext();
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -64,6 +65,21 @@ export function DirectChatHeader({
         return "text-gray-500 dark:text-gray-400";
     }
   };
+
+  const handleVideoCall = () => {
+    if (partner && conversationType === ConversationType.Direct) {
+      startCall(conversationId, partner.userId, partner.fullName, partner.avatarUrl || '');
+    }
+  };
+
+  const handleAudioCall = () => {
+    // TODO: Implement audio call functionality
+    console.log("Audio call not implemented yet");
+  };
+
+  const isCalling = videoCallState.isOutgoingCall &&
+    videoCallState.outgoingCallData?.receiverId === partner?.userId;
+
   return (
     <>
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
@@ -95,17 +111,20 @@ export function DirectChatHeader({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Video Call Manager */}
-          {conversationType === ConversationType.Direct && partner && user && (
-            <DirectVideoCallManager
-              conversationId={conversationId}
-              partnerId={partner.userId}
-              partnerName={displayName}
-              partnerAvatar={avatarUrl || undefined}
-              currentUserId={user.id}
-              currentUserName={user.fullName || "User"}
-              currentUserAvatar={user.avatarUrl || undefined}
-            />
+          {/* Call Buttons - Only show for direct conversations */}
+          {conversationType === ConversationType.Direct && partner && (
+            <>
+              <AudioCallButton
+                onClick={handleAudioCall}
+                isCalling={isCalling}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              />
+              <VideoCallButton
+                onClick={handleVideoCall}
+                isCalling={isCalling}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              />
+            </>
           )}
 
           {/* More Options Button */}

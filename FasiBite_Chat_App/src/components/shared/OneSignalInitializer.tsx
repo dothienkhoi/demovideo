@@ -19,6 +19,11 @@ export const OneSignalInitializer = () => {
           serviceWorkerPath: "/OneSignalSDKWorker.js",
           notificationClickHandlerMatch: "origin",
           notificationClickHandlerAction: "navigate",
+          // Reduce preload warnings by optimizing resource loading
+          autoResubscribe: true,
+          autoRegister: true,
+          // Disable automatic preloading of resources
+          preload: false,
         });
         console.log("OneSignal initialized successfully");
       } catch (error) {

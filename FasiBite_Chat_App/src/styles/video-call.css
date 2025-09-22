@@ -704,6 +704,210 @@
     pointer-events: auto !important;
 }
 
+/* ===== MODERN VIDEO CALL INTERFACE ===== */
+/* Modern video call interface with smooth animations */
+.modern-video-call-interface {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 99999 !important;
+    background: linear-gradient(135deg, #1f2937 0%, #111827 50%, #000000 100%) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    animation: fadeIn 0.3s ease-out !important;
+}
+
+/* Modern call modal - using Radix UI Dialog */
+
+/* Pulse animation for incoming calls */
+@keyframes pulseRing {
+    0% {
+        transform: scale(0.8);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+.pulse-ring {
+    animation: pulseRing 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal fade in animation */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal slide in animation */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Button hover animations */
+.modern-call-button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transform-origin: center !important;
+}
+
+.modern-call-button:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+}
+
+.modern-call-button:active {
+    transform: scale(0.95) !important;
+}
+
+/* Video call interface animations */
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Minimized state animation */
+.video-call-minimized {
+    animation: slideInFromRight 0.3s ease-out !important;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.modern-spinner {
+    animation: spin 1s linear infinite !important;
+}
+
+/* ===== VIDEO CALL INTERFACE 1V1 (LEGACY) ===== */
+/* Ensure video call interface is always on top */
+.video-call-interface-1v1 {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 9999 !important;
+    background: #000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Video call minimized state */
+.video-call-minimized {
+    position: fixed !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    z-index: 9999 !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.75rem !important;
+    padding: 0.75rem !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Video call modal overlay */
+.video-call-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 9998 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Video call modal content */
+.video-call-modal-content {
+    background: white !important;
+    border-radius: 0.75rem !important;
+    padding: 1.5rem !important;
+    max-width: 28rem !important;
+    width: 100% !important;
+    margin: 1rem !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Dark mode for modal */
+.dark .video-call-modal-content {
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+}
+
+/* Ensure video call interface is above everything */
+[class*="video-call"] {
+    z-index: 9999 !important;
+}
+
+/* Force video call interface to be visible */
+.video-call-interface-1v1,
+.video-call-minimized,
+.video-call-modal-overlay {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
     .footer-controls {
@@ -724,5 +928,15 @@
     .lk-participants {
         width: 280px;
         height: 350px;
+    }
+
+    /* Mobile video call interface */
+    .video-call-interface-1v1 {
+        padding: 0.5rem !important;
+    }
+
+    .video-call-modal-content {
+        margin: 0.5rem !important;
+        padding: 1rem !important;
     }
 }

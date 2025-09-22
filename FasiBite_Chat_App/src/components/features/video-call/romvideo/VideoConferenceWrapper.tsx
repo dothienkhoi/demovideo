@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useEffect, useRef, useMemo, useCallback, useState } from "react";
 import { VideoConference, useRoomContext } from "@livekit/components-react";
 
 interface VideoConferenceWrapperProps {
@@ -11,6 +11,7 @@ interface VideoConferenceWrapperProps {
 export function VideoConferenceWrapper({ className, chatMessageFormatter }: VideoConferenceWrapperProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const room = useRoomContext();
+    const [isMounted, setIsMounted] = useState(false);
 
     // Memoized error handler for LiveKit layout errors
     const handleError = useCallback((event: ErrorEvent) => {
@@ -22,7 +23,8 @@ export function VideoConferenceWrapper({ className, chatMessageFormatter }: Vide
             "useVisualStableUpdate",
             "No subscription", // SessionManager errors
             "Cannot read properties of undefined",
-            "Cannot read property"
+            "Cannot read property",
+            "Maximum update depth exceeded"
         ];
 
         if (errorPatterns.some(pattern => event.message?.includes(pattern))) {
@@ -38,7 +40,8 @@ export function VideoConferenceWrapper({ className, chatMessageFormatter }: Vide
             "Element not part of the array",
             "updatePages",
             "_camera_placeholder",
-            "No subscription"
+            "No subscription",
+            "Maximum update depth exceeded"
         ];
 
         if (errorPatterns.some(pattern => event.reason?.message?.includes(pattern))) {
@@ -57,11 +60,27 @@ export function VideoConferenceWrapper({ className, chatMessageFormatter }: Vide
         };
     }, [handleError, handleUnhandledRejection]);
 
+    // Ensure component is mounted before rendering VideoConference
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     // Memoized video conference props
     const videoConferenceProps = useMemo(() => ({
         chatMessageFormatter,
         className: "h-full w-full"
     }), [chatMessageFormatter]);
+
+    // Don't render VideoConference until component is fully mounted
+    if (!isMounted || !room) {
+        return (
+            <div ref={containerRef} className={className}>
+                <div className="h-full w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                    <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div ref={containerRef} className={className}>

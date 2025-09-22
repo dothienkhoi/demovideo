@@ -23,10 +23,10 @@ export function MicrophoneToggle() {
             onClick={handleClick}
             disabled={pending}
             className={`rounded-full w-14 h-14 border-2 transition-all duration-200 transform active:scale-95 ${pending
-                    ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed'
-                    : enabled
-                        ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50'
-                        : 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-400/50 hover:border-red-400'
+                ? 'bg-gray-500/20 text-gray-400 border-gray-400/50 cursor-not-allowed'
+                : enabled
+                    ? 'bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50'
+                    : 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-400/50 hover:border-red-400'
                 }`}
             aria-label={enabled ? "Turn off microphone" : "Turn on microphone"}
         >

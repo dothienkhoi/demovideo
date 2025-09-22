@@ -9,15 +9,11 @@ import { Button } from "@/components/ui/button";
 export function CameraToggle() {
     const { enabled, toggle, pending } = useTrackToggle({ source: Track.Source.Camera });
 
-    console.log('[CameraToggle] State:', { enabled, pending });
 
     const handleClick = useCallback(async () => {
-        console.log('[CameraToggle] Toggle clicked, current state:', { enabled, pending });
         try {
             await toggle();
-            console.log('[CameraToggle] Toggle completed successfully');
         } catch (error) {
-            console.error('[CameraToggle] Toggle error:', error);
             // Silently handle camera toggle errors
             // Could be due to permissions or hardware issues
         }

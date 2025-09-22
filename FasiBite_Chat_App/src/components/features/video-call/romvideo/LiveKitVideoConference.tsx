@@ -94,7 +94,7 @@ export function LiveKitVideoConference({ sessionId, conversationId, onClose, gro
             isMounted = false;
             room.disconnect();
         };
-    }, [room, sessionId, connectOptions]);
+    }, [sessionId, conversationId, userId]); // Removed room and connectOptions from dependencies
 
     const handleDisconnect = async () => {
         console.log("[LiveKitVideoConference] HandleDisconnect called");

@@ -1,6 +1,23 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Force video call interface to be on top */
+.video-call-interface-1v1,
+.video-call-minimized,
+.video-call-modal-overlay,
+[style*="z-index: 99999"],
+[style*="z-index: 100000"],
+[style*="z-index: 999999"],
+[style*="z-index: 1000000"] {
+  z-index: 999999 !important;
+  position: fixed !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Video call modal - using Radix UI Dialog (no custom CSS needed) */
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
